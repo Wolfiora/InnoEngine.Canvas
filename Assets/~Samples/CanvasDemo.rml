@@ -1,0 +1,40 @@
+<rml>
+  <head>
+    <title>InnoEngine.Canvas Sample</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Interface;
+        color: #f5f7ff;
+      }
+      #panel {
+        position: absolute;
+        left: 48px;
+        top: 48px;
+        width: 360px;
+        padding: 24px;
+        border-radius: 16px;
+        background-color: #12182ee8;
+        border: 1px #6e8cff;
+      }
+      h1 { margin: 0 0 12px 0; font-size: 30px; }
+      p { margin: 0 0 18px 0; color: #b8c2e8; }
+      button {
+        width: 180px;
+        height: 48px;
+        border-radius: 10px;
+        background-color: #5d72ff;
+        color: white;
+      }
+      button:hover { background-color: #7890ff; }
+      button:active { background-color: #4156d8; }
+    </style>
+  </head>
+  <body>
+    <div id="panel">
+      <h1>InnoEngine.Canvas</h1>
+      <p>Retained RML and RCSS, rendered through InnoEngine's backend-neutral RenderGraph.</p>
+      <button id="launch">Launch</button>
+    </div>
+  </body>
+</rml>

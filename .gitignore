@@ -1,0 +1,67 @@
+# Inno-generated caches, logs, temporary data, and exported products
+/Library/
+/Logs/
+/Temp/
+/Plugins/
+/Builds/
+
+# Generated IDE projections
+/*.csproj
+/*.sln
+/*.slnx
+/*.sln.iml
+/.idea/
+/.vs/
+/.vscode/
+/.fleet/
+
+# .NET build and test output
+**/[Bb]in/
+**/[Oo]bj/
+/artifacts/
+/TestResults/
+/BenchmarkDotNet.Artifacts/
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.coveragexml
+
+# Per-user IDE and Inno Editor state
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+*.userprefs
+/editor.ini
+/Settings.Editor.inno
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Operating-system metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Editor backups, swap files, and crash dumps
+*.swp
+*.swo
+*~
+*.bak
+*.orig
+*.rej
+*.tmp
+mono_crash.*
+
+# Assets, .imeta sidecars, Settings.Project.inno, and Settings.Build.inno are authored source.

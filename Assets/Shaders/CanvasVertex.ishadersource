@@ -1,0 +1,14 @@
+// Transforms RmlUi pixel-space vertices through the request-owned orthographic view.
+void Evaluate(
+    vec2 a_position,
+    vec2 a_texcoord0,
+    vec4 a_color0,
+    mat4 viewProjection,
+    out vec4 position,
+    out vec2 uv,
+    out vec4 color)
+{
+    position = mul(viewProjection, vec4(a_position, 0.0, 1.0));
+    uv = a_texcoord0;
+    color = a_color0;
+}

@@ -1,0 +1,9 @@
+// Composes premultiplied RmlUi texture and vertex colors for source-over blending.
+void Evaluate(
+    vec2 uv,
+    vec4 vertexColor,
+    sampler2D s_canvasTexture,
+    out vec4 color)
+{
+    color = texture2D(s_canvasTexture, uv) * vertexColor;
+}

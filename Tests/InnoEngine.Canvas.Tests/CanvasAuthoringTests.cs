@@ -79,12 +79,12 @@ public sealed class CanvasAuthoringTests
     }
 
     [Fact]
-    public void CanvasConfigurationRejectsInvalidDensityAndWeight()
+    public void CanvasConfigurationKeepsLayoutInProjectSettings()
     {
         var canvas = new Canvas();
-        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.density = 0f);
-        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.density = float.NaN);
-        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.fontWeight = 99);
+        var settings = new CanvasProjectSettings();
+        Assert.Throws<ArgumentOutOfRangeException>(() => settings.logicalPixelsPerWorldUnit = 0f);
+        Assert.Throws<ArgumentOutOfRangeException>(() => settings.logicalPixelsPerWorldUnit = float.NaN);
         Assert.Throws<InvalidOperationException>(() => canvas.SetText("panel", "ready"));
     }
 }

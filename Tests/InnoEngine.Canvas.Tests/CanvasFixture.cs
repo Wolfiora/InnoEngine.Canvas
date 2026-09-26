@@ -17,6 +17,7 @@ using Inno.Extensibility.Types;
 using Inno.Rendering.Assets;
 using Inno.Scene;
 using Inno.UI.Assets;
+using Inno.Text.Assets;
 
 namespace Inno.Canvas.Tests;
 
@@ -41,6 +42,9 @@ internal sealed class CanvasFixture : IDisposable
             typeof(AssetSerializationServices).Assembly,
             typeof(BgfxShaderSourceFrontend).Assembly,
             typeof(UiDocumentImporter).Assembly,
+            typeof(FontImporter).Assembly,
+            typeof(SceneAsset).Assembly,
+            Assembly.Load("Inno.Scene.Assets"),
             typeof(RmlUiDocumentFrontend).Assembly
         ];
         m_modules = new ModuleHost(new ModuleHostOptions
@@ -68,6 +72,8 @@ internal sealed class CanvasFixture : IDisposable
 
     internal IDisposable EnterAssetScope(AssetLoader loader)
         => AssetExecutionContext.EnterScope(new LoaderLookup(loader));
+
+    internal IDisposable EnterLogScope() => m_logs.EnterScope();
 
     internal void CopyProjectAsset(string relativePath)
     {

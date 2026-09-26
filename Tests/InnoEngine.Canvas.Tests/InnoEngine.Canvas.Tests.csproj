@@ -15,6 +15,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../Assets/Runtime/**/*.cs" />
+    <Compile Include="../../Assets/~Samples/**/*.cs" />
     <Compile Include="../../Assets/Editor/**/*.editor.cs" />
     <Compile Include="*.cs" />
     <None Include="../../Assets/**/*"
@@ -42,7 +43,10 @@
     <ProjectReference Include="../../../InnoEngine/src/content/assets/Inno.Assets.Pipeline/Inno.Assets.Pipeline.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/content/references/Inno.References/Inno.References.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/content/scene/Inno.Scene/Inno.Scene.csproj" />
+    <ProjectReference Include="../../../InnoEngine/src/content/scene/Inno.Scene.Assets/Inno.Scene.Assets.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/composition/editor/features/Inno.Editor.Assets/Inno.Editor.Assets.csproj" />
+    <ProjectReference Include="../../../InnoEngine/src/composition/editor/features/Inno.Editor.Rendering/Inno.Editor.Rendering.csproj" />
+    <ProjectReference Include="../../../InnoEngine/src/composition/editor/features/Inno.Editor.Shaders/Inno.Editor.Shaders.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/foundation/core/Inno.Core.Diagnostics/Inno.Core.Diagnostics.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/foundation/core/Inno.Core.Graphs/Inno.Core.Graphs.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/foundation/core/Inno.Core.Identity/Inno.Core.Identity.csproj" />
@@ -54,6 +58,7 @@
     <ProjectReference Include="../../../InnoEngine/src/services/rendering/Inno.Rendering.Assets/Inno.Rendering.Assets.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/services/rendering/Inno.Rendering.Shaders/Inno.Rendering.Shaders.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/services/text/Inno.Text/Inno.Text.csproj" />
+    <ProjectReference Include="../../../InnoEngine/src/services/text/Inno.Text.Assets/Inno.Text.Assets.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/services/ui/Inno.UI/Inno.UI.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/services/ui/Inno.UI.Assets/Inno.UI.Assets.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/adapters/ui/Inno.Adapter.UI.RmlUi.Authoring/Inno.Adapter.UI.RmlUi.Authoring.csproj" />

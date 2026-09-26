@@ -2,6 +2,8 @@
   <head>
     <title>InnoEngine.Canvas Sample</title>
     <style>
+      @font-face { font-family: Interface; src: url(Fonts/LatoLatin-Regular.ttf); font-weight: 400; }
+      @font-face { font-family: Interface; src: url(Fonts/LatoLatin-Bold.ttf); font-weight: 700; }
       body {
         margin: 0;
         font-family: Interface;
@@ -9,32 +11,37 @@
       }
       #panel {
         position: absolute;
-        left: 48px;
-        top: 48px;
-        width: 360px;
-        padding: 24px;
-        border-radius: 16px;
+        left: 12dp;
+        top: 12dp;
+        width: 180dp;
+        padding: 10dp;
+        border-radius: 8dp;
         background-color: #12182ee8;
-        border: 1px #6e8cff;
+        border: 1dp #6e8cff;
       }
-      h1 { margin: 0 0 12px 0; font-size: 30px; }
-      p { margin: 0 0 18px 0; color: #b8c2e8; }
+      h1 { display: block; margin: 0 0 6dp 0; font-size: 18dp; font-weight: 700; }
+      p { display: block; margin: 0 0 8dp 0; font-size: 12dp; color: #b8c2e8; }
       button {
-        width: 180px;
-        height: 48px;
-        border-radius: 10px;
+        display: block;
+        width: 100dp;
+        height: 28dp;
+        border-radius: 6dp;
         background-color: #5d72ff;
         color: white;
+        font-size: 14dp;
       }
       button:hover { background-color: #7890ff; }
       button:active { background-color: #4156d8; }
+      #message { transition: opacity 0.3s cubic-out; }
+      #message.faded { opacity: 0; }
     </style>
   </head>
   <body>
     <div id="panel">
-      <h1>InnoEngine.Canvas</h1>
-      <p>Retained RML and RCSS, rendered through InnoEngine's backend-neutral RenderGraph.</p>
-      <button id="launch">Launch</button>
+      <h1>Canvas Demo</h1>
+      <p id="message">RML UI on a world Canvas</p>
+      <p id="status">Clicks: 0</p>
+      <button id="launch">Toggle fade</button>
     </div>
   </body>
 </rml>

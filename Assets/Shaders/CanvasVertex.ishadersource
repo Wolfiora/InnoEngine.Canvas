@@ -1,6 +1,6 @@
-// Transforms RmlUi pixel-space vertices through the request-owned orthographic view.
+// Transforms Canvas world-space vertices through the rendering model's view.
 void Evaluate(
-    vec2 a_position,
+    vec3 a_position,
     vec2 a_texcoord0,
     vec4 a_color0,
     mat4 viewProjection,
@@ -8,7 +8,7 @@ void Evaluate(
     out vec2 uv,
     out vec4 color)
 {
-    position = mul(viewProjection, vec4(a_position, 0.0, 1.0));
+    position = mul(viewProjection, vec4(a_position, 1.0));
     uv = a_texcoord0;
     color = a_color0;
 }

@@ -1,64 +1,30 @@
 # InnoEngine.Canvas
 
-`InnoEngine.Canvas` 是一个可直接由 Inno Editor 打开的独立 InnoProject，同时也是可导出为 `.iplugin` 的源码型 Canvas 插件。它通过引擎内建的 Text/UI Service 与 RmlUi 适配器完成布局、文字和 DOM 交互，再通过公开 Rendering API 合成到最终画面；插件本身不携带或直接绑定 RmlUi、FreeType、HarfBuzz 等原生库。
+Canvas 是独立 UI 插件：RML 文档、字体依赖、DOM 事件和世界空间网格由本插件负责。它不引用 Rendering2D，也不提供 Camera 或 GameView 渲染模型。只有安装了能接受世界内容的渲染模型，GameView 和 Player 才会显示 Canvas。
 
-> [!IMPORTANT]
-> InnoEngine 与该插件仍在开发中。请使用相互匹配的 revision；序列化格式和公开脚本 API 当前不承诺向后兼容。
+## 运行样例
 
-## 目录关系
-
-推荐将引擎和插件并排放置：
-
-```text
-GameEngineDev/
-├── InnoEngine/
-└── InnoEngine.Canvas/
-```
-
-从本仓库启动 Editor：
+本仓库独立安装和构建，不在 `Plugins/` 中引用 Rendering2D。`Assets/~Samples/SampleScene.iscene` 只包含默认 800 × 450 逻辑像素、8 × 4.5 世界单位的 Canvas 和按钮控制脚本；点击按钮会更新计数并切换文字的 RCSS 淡出效果。在同时安装 Canvas 与 Rendering2D 的 `TestProject` 中配置 Camera2D 和 Rendering2DSceneSystem 后进行可视测试。安装态样例可只读打开，修改时先使用 **Import Sample**。Canvas 单独安装时文档 API 仍可工作，但没有渲染模型，GameView 不出图。
 
 ```bash
 /Users/aaronliao/.dotnet/dotnet run \
   --project ../InnoEngine/src/composition/editor/host/Inno.Editor.Application -- .
 ```
 
-Editor 会生成 `Library/`、`Logs/`、`Inno.GameScripts.csproj`、`Inno.EditorScripts.csproj` 与 `InnoProject.sln`。它们都是本地派生物，不是插件源码，也不应提交。
+Canvas 的 `referenceWidth`、`referenceHeight` 默认是 800 × 450，始终决定 RML 百分比布局尺寸。项目级 `CanvasProjectSettings.logicalPixelsPerWorldUnit` 默认是 100；局部平面因此为 8 × 4.5 世界单位，再由自身和父级 Transform 缩放、旋转和定位。相机决定投影和最终屏幕像素密度。Canvas 不存字体、材质、Pipeline、排序或独立密度字段；材质由插件内部管理，2D 排序由 Rendering2D 的 SortingGroup2D 决定。
 
-## 内容
+字体在 RML 中用 `@font-face` 声明，正文通过 `font-family`、`font-weight` 和 `font-size` 选择字体族、字形和大小。`font-family: none` 不绘制文字。字体文件会成为文档的资产依赖，换文档时重建 UI Context，避免旧字体或字形残留。文档依然可以使用 `Canvas.SetText`、`SetClass`、`SetAttribute`、`SetContent` 更新 HUD，用 `DrainEvents()` 消费点击等 DOM 事件。
 
-| 路径 | 用途 |
-| --- | --- |
-| `Assets/Runtime/Components/Canvas.cs` | 可添加到 GameObject 的 Canvas 组件与最小 DOM API |
-| `Assets/Runtime/Rendering/` | UI Context、请求生命周期和后端中立的 GPU 合成 Pipeline |
-| `Assets/Editor/` | Shader Graph 模板与 Pipeline 资产创建菜单 |
-| `Assets/Shaders/` | Canvas 顶点/片段函数与 Shader Graph |
-| `Assets/Materials/Canvas.imaterial` | 预乘 Alpha 材质 |
-| `Assets/Pipelines/Canvas.irenderpipeline` | Canvas Render Pipeline 资产 |
-| `Assets/~Samples/` | 示例 RML、Lato Latin 字体与许可证 |
-| `Tests/InnoEngine.Canvas.Tests/` | 插件源码、资源导入、生命周期和原生 Shader 编译回归测试 |
+`Assets/Runtime/Rendering` 将 UI 作为中立 `IViewContentSource` 发布；Rendering2D 收集后与精灵统一排序，在场景颜色阶段和后处理之前绘制。输入先按 View 与同一绘制顺序命中，再逆变换成 Canvas 局部 RML 坐标。默认直接绘制网格和字形图集，不为每个 Canvas 固定创建纹理。
 
-## 使用
-
-在场景 GameObject 上添加 `Canvas`，将 `~Samples/CanvasDemo.rml` 指定给 `document`，按需指定示例字体并把 `fontFamily` 设为 `Interface`。新组件的 `Reset` 会加载当前插件源中的默认 Pipeline 和 Material；旧场景或手工构造的组件如果字段为空，需要显式选择 `Assets/Pipelines/Canvas.irenderpipeline` 与 `Assets/Materials/Canvas.imaterial`。
-
-每个组件拥有独立 UI Context 和整屏 viewport。布局随 presentation 尺寸与 `density` 更新；`order` 决定相对其他 presentation request 的顺序。禁用或删除组件会关闭 Context 并退休相关纹理。当前实现是 screen-space full-presentation Canvas，不是 world-space UI，也不替换 Editor 的 ImGui。
-
-脚本 API 使用 `Inno.Canvas` 命名空间，这与 `InnoEngine.Rendering2D` 仓库使用 `Inno.Rendering2D` 的约定一致。`inno.canvas.*` 是资产和渲染扩展的稳定协议 ID，不随仓库展示名改变。Project/Plugin ID 固定为 `innoengine.canvas`，用户可见名称为 `InnoEngine.Canvas`。
-
-## 构建与验证
+## 验证与导出
 
 ```bash
 /Users/aaronliao/.dotnet/dotnet test Tests/InnoEngine.Canvas.Tests/InnoEngine.Canvas.Tests.csproj
-
 /Users/aaronliao/.dotnet/dotnet run \
-  --project ../InnoEngine/build/pipeline/Inno.Build.Cli -- \
-  plugin --project . \
-  --output Builds/InnoEngine.Canvas.iplugin \
+  --project ../InnoEngine/src/composition/editor/host/Inno.Editor.Build.Cli -- \
+  plugin --project . --output Builds/InnoEngine.Canvas.iplugin \
   --display-name InnoEngine.Canvas
 ```
 
-导出的 `Builds/InnoEngine.Canvas.iplugin` 可复制到目标 InnoProject 的 `Plugins/`。安装后的内容是只读 mount；继续开发应修改本仓库的 `Assets/` 后重新导出。
-
-## 版本控制
-
-`Assets/`、所有 `.imeta`、`Settings.Project.inno` 和 `Settings.Build.inno` 是源码。`Library/`、`Logs/`、`Temp/`、`Builds/`、根目录 IDE 投影及所有 `bin/obj` 均可重建，已由 `.gitignore` 排除。
+构建目录、`Library/`、`Logs/` 和根目录生成的 IDE 工程都是派生文件。具体模块边界见 [架构文档](docs/ARCHITECTURE.md)。

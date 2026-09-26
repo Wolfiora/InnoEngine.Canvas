@@ -11,21 +11,13 @@ namespace Inno.Canvas;
 /// </summary>
 public static class CanvasIds
 {
-    internal const int presentationOrder = 100000;
     internal const string defaultMaterialPath = "Materials/Canvas.imaterial";
-    internal const string defaultPipelinePath = "Pipelines/Canvas.irenderpipeline";
 
-    /// <summary>Gets the Canvas render pipeline extension identity.</summary>
-    public const string pipeline = "inno.canvas.pipeline";
-
-    /// <summary>Gets the automatic Canvas render request provider identity.</summary>
-    public const string requestProvider = "inno.canvas.request-provider";
+    /// <summary>Gets the world-content source extension identity.</summary>
+    public const string contentSource = "inno.canvas.world-content";
 
     /// <summary>Gets the Canvas shader creation template identity.</summary>
     public const string shaderTemplate = "inno.canvas.shader-template";
-
-    /// <summary>Gets the Canvas pipeline asset creation template identity.</summary>
-    public const string pipelineCreation = "inno.canvas.asset-create.pipeline";
 
     /// <summary>Gets the material contract consumed by the Canvas pipeline.</summary>
     public static ShaderContractId materialContract => new("inno.canvas.material");

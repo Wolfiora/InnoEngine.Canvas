@@ -15,6 +15,8 @@ Canvas 的 `referenceWidth`、`referenceHeight` 默认是 800 × 450，始终决
 
 字体在 RML 中用 `@font-face` 声明，正文通过 `font-family`、`font-weight` 和 `font-size` 选择字体族、字形和大小。`font-family: none` 不绘制文字。字体文件会成为文档的资产依赖，换文档时重建 UI Context，避免旧字体或字形残留。文档依然可以使用 `Canvas.SetText`、`SetClass`、`SetAttribute`、`SetContent` 更新 HUD，用 `DrainEvents()` 消费点击等 DOM 事件。
 
+Canvas 的 RML 根默认填满独立的 `referenceWidth × referenceHeight` 布局区域，无需给 `body` 手工设置宽高。RCSS 中 `position: absolute; right: 10dp; bottom: 10dp` 相对 Canvas 右下边界计算；`left: 50%; top: 50%; transform: translate(-50%, -50%)` 将元素自身居中。显式 CSS 根尺寸仍可覆盖默认值；密度只决定屏幕上的物理像素，百分比始终按布局范围计算。`<style>`、`<link href="Styles.rcss">` 与 RCSS `@import` 可用于样式及资产依赖，语法能力以 RmlUi 支持的 CSS 子集为准。
+
 `Assets/Runtime/Rendering` 将 UI 作为中立 `IViewContentSource` 发布；Rendering2D 收集后与精灵统一排序，在场景颜色阶段和后处理之前绘制。输入先按 View 与同一绘制顺序命中，再逆变换成 Canvas 局部 RML 坐标。默认直接绘制网格和字形图集，不为每个 Canvas 固定创建纹理。
 
 ## 验证与导出

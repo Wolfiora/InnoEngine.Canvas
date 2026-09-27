@@ -17,8 +17,6 @@ namespace Inno.Canvas;
 [EditorGizmoProviderExtension("inno.canvas.scene-gizmos")]
 public sealed class CanvasGizmoProvider : EditorGizmoProvider
 {
-    private static readonly Color S_COLOR = new(0.45f, 0.9f, 0.86f, 1f);
-
     /// <inheritdoc />
     public override void Collect(EditorGizmoContext context, IEditorGizmoSink sink)
     {
@@ -36,7 +34,7 @@ public sealed class CanvasGizmoProvider : EditorGizmoProvider
                     !owner.TryGetComponent(out Canvas? canvas) ||
                     canvas is not { isActiveAndEnabled: true })
                     continue;
-                sink.Icon(owner.identity, owner.transform.worldPosition, "UI", S_COLOR);
+                sink.Icon(owner.identity, owner.transform.worldPosition, "canvas");
                 if (owner.identity.runtimeIdentity != context.selected)
                     continue;
                 float halfWidth = canvas.referenceWidth / pixelsPerUnit * 0.5f;
@@ -49,7 +47,7 @@ public sealed class CanvasGizmoProvider : EditorGizmoProvider
                     owner.transform.TransformPoint(new Vector3(-halfWidth, halfHeight, 0f))
                 ];
                 for (int index = 0; index < corners.Length; index++)
-                    sink.Line(corners[index], corners[(index + 1) % corners.Length], S_COLOR);
+                    sink.Line(corners[index], corners[(index + 1) % corners.Length]);
             }
         }
     }

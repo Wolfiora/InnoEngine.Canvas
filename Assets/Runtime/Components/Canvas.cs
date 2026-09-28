@@ -1,19 +1,11 @@
 using System;
 using System.Collections.Generic;
-
-#if INNO_ENGINE_VALIDATION
-using Inno.Core.Serialization;
-using Inno.Extensibility.Types;
-using Inno.Scene;
-using Inno.UI;
-using UiApi = Inno.UI.UI;
-#else
+using InnoEngine.Events;
 using InnoEngine.Reflection;
 using InnoEngine.Scene;
 using InnoEngine.Serialization;
 using InnoEngine.UI;
 using UiApi = InnoEngine.UI.UI;
-#endif
 
 namespace Inno.Canvas;
 
@@ -23,7 +15,8 @@ namespace Inno.Canvas;
 [StableTypeId("385f32c2-aa2f-4383-82d0-dcedb722e680")]
 public sealed class Canvas : GameBehavior
 {
-    private static readonly IReadOnlyList<UiEvent> S_NO_EVENTS = Array.Empty<UiEvent>();
+    private readonly EventDispatcher m_eventDispatcher = new();
+    private readonly EventHub m_events;
     private UiContextHandle m_context;
     private UiDocumentHandle m_loadedDocument;
     private IUiService? m_ui;
@@ -32,9 +25,11 @@ public sealed class Canvas : GameBehavior
     private int m_viewportWidth;
     private int m_viewportHeight;
     private float m_density;
-    private readonly List<UiEvent> m_events = [];
     private int m_referenceWidth = 800;
     private int m_referenceHeight = 450;
+
+    /// <summary>Creates a Canvas with an isolated Core event hub for its document interactions.</summary>
+    public Canvas() => m_events = m_eventDispatcher.CreateHub();
 
     /// <summary>Gets or sets the imported RML document displayed by this canvas.</summary>
     [SerializableProperty]
@@ -62,18 +57,17 @@ public sealed class Canvas : GameBehavior
     public bool isReady => m_context.isValid && m_loadedDocument.isValid;
 
     /// <summary>
-    /// Removes and returns DOM events accumulated since the previous drain.
+    /// Subscribes to document interactions through this Canvas's Core event hub.
     /// </summary>
-    /// <returns>
-    /// The ordered pending events, or an empty collection when none are pending.
-    /// </returns>
-    public IReadOnlyList<UiEvent> DrainEvents()
+    /// <param name="handler">The callback invoked for each document event.</param>
+    /// <param name="priority">Listener priority within this Canvas; higher values run first.</param>
+    /// <returns>A token that removes the listener when disposed.</returns>
+    /// <exception cref="ArgumentNullException">The handler is null.</exception>
+    /// <exception cref="InvalidOperationException">The Canvas has been destroyed.</exception>
+    public IDisposable Listen(Action<UiEvent> handler, int priority = 0)
     {
-        if (m_events.Count == 0)
-            return S_NO_EVENTS;
-        UiEvent[] pending = m_events.ToArray();
-        m_events.Clear();
-        return pending;
+        ArgumentNullException.ThrowIfNull(handler);
+        return m_events.Listen<CanvasUiEvent>(uiEvent => handler(uiEvent.value), priority);
     }
 
     /// <summary>Replaces an element's children with escaped plain text.</summary>
@@ -142,7 +136,6 @@ public sealed class Canvas : GameBehavior
                 m_viewportWidth = width;
                 m_viewportHeight = height;
                 m_density = density;
-                m_events.Clear();
             }
             catch
             {
@@ -161,10 +154,18 @@ public sealed class Canvas : GameBehavior
     }
 
     /// <inheritdoc />
-    protected override void OnDestroy() => ReleaseDocument();
+    protected override void Update() => m_eventDispatcher.Flush();
+
+    /// <inheritdoc />
+    protected override void OnDestroy()
+    {
+        ReleaseDocument();
+        m_events.Dispose();
+    }
 
     private void ReleaseDocument()
     {
+        m_eventDispatcher.DiscardPending();
         if (m_ui is not null && m_context.isValid)
         {
             try { m_ui.DestroyContext(m_context); }
@@ -173,13 +174,13 @@ public sealed class Canvas : GameBehavior
         m_ui = null;
         m_context = default;
         m_loadedDocument = default;
-        m_events.Clear();
     }
 
     internal void PublishEvents(IReadOnlyList<UiEvent> events)
     {
         ArgumentNullException.ThrowIfNull(events);
-        m_events.AddRange(events);
+        foreach (UiEvent uiEvent in events)
+            m_eventDispatcher.Enqueue(new CanvasUiEvent(uiEvent));
     }
 
     private UiContextHandle RequireContext()
@@ -191,4 +192,11 @@ public sealed class Canvas : GameBehavior
         => EnsureDocument(m_context.isValid ? m_viewportWidth : referenceWidth,
             m_context.isValid ? m_viewportHeight : referenceHeight,
             m_context.isValid ? m_density : 1f).loadedDocument;
+
+    private sealed class CanvasUiEvent : Event
+    {
+        public CanvasUiEvent(UiEvent value) => this.value = value;
+
+        public UiEvent value { get; }
+    }
 }

@@ -25,7 +25,7 @@ Inno.Canvas                     RML、字体、世界画布、UI 绘制与事件
 1. Editor/Player 提供 `ContentReadScope`、输出 viewport 和输入。Rendering2D 从场景的 `Rendering2DSceneSystem` 与 Camera2D 建立 View。
 2. Canvas `IViewContentSource` 读取 Canvas 所在对象的完整父子 Transform。局部画布为以原点为中心的单位 XY 平面，世界 X/Y 轴长乘项目级 `logicalPixelsPerWorldUnit` 得到 RML 逻辑尺寸；相机投影只决定输出像素与字形栅格密度。
 3. Rendering2D 收集精灵及外部 `ViewContentItem`，应用其 SortingGroup2D 规则统一排序。Canvas 是一个内部顺序固定的透明项，可处于精灵之间。排序后只合并相邻精灵批次。
-4. 已捕获指针的内容项优先接收后续输入；其余目标按绘制顺序反向命中。指针按下决定键盘焦点，焦点 Canvas 在指针移出后继续接收按键和文字。Canvas 射线命中自身平面，将交点转换到局部 RML 坐标。所有 View 先路由输入，`IViewContentFrameSource.CompleteFrame` 再统一推进每个文档 Context 一次；Canvas 绘制器将 RML 网格和图集直接送入 2D 场景颜色阶段，随后才进行后处理。
+4. 已捕获指针的内容项优先接收后续输入；其余目标按绘制顺序反向命中。指针按下决定键盘焦点，焦点 Canvas 在指针移出后继续接收按键和文字。Canvas 射线命中自身平面，将交点转换到局部 RML 坐标。所有 View 先路由输入，`IViewContentFrameSource.CompleteFrame` 再统一推进每个文档 Context 一次，并将 DOM 事件放入 Core EventDispatcher；Canvas 的下一次 GameBehavior.Update 在运行会话作用域内派发回调。Canvas 绘制器将 RML 网格和图集直接送入 2D 场景颜色阶段，随后才进行后处理。
 5. 扩展代际退休时，Canvas Context、字形纹理、字体资产 lease 与绘制资源释放；RmlUi 原生字体注册由 UI backend 在自身退休时清空。Editor/Player 输出目标归 Host 所有。Shader/Material 预览使用专用请求，不属于场景模型。
 
 ## 作者与运行时约束

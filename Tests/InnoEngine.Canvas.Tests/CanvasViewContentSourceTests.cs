@@ -43,6 +43,8 @@ public sealed class CanvasViewContentSourceTests
         owner.transform.localScale = new Vector3(2f, 1f, 0f);
         Canvas canvas = owner.AddComponent<Canvas>();
         canvas.document = document;
+        var receivedEvents = new List<UiEvent>();
+        using IDisposable subscription = canvas.Listen(receivedEvents.Add);
 
         var ui = new CapturingUi();
         using var source = new CanvasViewContentSource();
@@ -77,8 +79,9 @@ public sealed class CanvasViewContentSourceTests
         Assert.Equal(1, ui.updated);
         Assert.Equal(1, ui.rendered);
         Assert.Equal(owner.identity.persistentId, item.owner.persistentId);
-        Assert.Equal(UiEventType.Click, Assert.Single(canvas.DrainEvents()).type);
-        Assert.Empty(canvas.DrainEvents());
+        Assert.Empty(receivedEvents);
+        fixture.world.Update(0.016f);
+        Assert.Equal(UiEventType.Click, Assert.Single(receivedEvents).type);
         Assert.True(canvas.SetAttribute("launch", "disabled", "true"));
         Assert.Equal(1, ui.attributesSet);
 

@@ -6,17 +6,17 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <DefineConstants>$(DefineConstants);INNO_ENGINE_VALIDATION</DefineConstants>
-    <InnoAssemblyDomain>InnoPlugin</InnoAssemblyDomain>
-    <InnoAssemblyScope>Runtime</InnoAssemblyScope>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <WarningsAsErrors>$(WarningsAsErrors);CS1570;CS1572;CS1573</WarningsAsErrors>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
+  <PropertyGroup>
+    <CanvasScriptOutput>$(MSBuildProjectDirectory)/obj/CanvasScripts</CanvasScriptOutput>
+    <CanvasCompiler>$(MSBuildProjectDirectory)/../../../InnoEngine/src/composition/editor/host/Inno.Editor.Build.Cli/bin/$(Configuration)/net9.0/Inno.Editor.Build.Cli.dll</CanvasCompiler>
+    <DotNetHost Condition="!$([MSBuild]::IsOSPlatform('Windows'))">$(MSBuildToolsPath)/../../dotnet</DotNetHost>
+    <DotNetHost Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(MSBuildToolsPath)/../../dotnet.exe</DotNetHost>
+  </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../Assets/Runtime/**/*.cs" />
-    <Compile Include="../../Assets/~Samples/**/*.cs" />
-    <Compile Include="../../Assets/Editor/**/*.editor.cs" />
     <Compile Include="*.cs" />
     <None Include="../../Assets/**/*"
           Exclude="../../Assets/**/*.cs"
@@ -34,11 +34,15 @@
           CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
-    <AssemblyMetadata Include="Inno.AssetSource" Value="project" />
-    <AssemblyMetadata Include="Inno.AssemblyDomain" Value="InnoPlugin" />
-    <AssemblyMetadata Include="Inno.AssemblyScope" Value="Runtime" />
+    <Reference Include="Inno.GameScripts">
+      <HintPath>$(CanvasScriptOutput)/Inno.GameScripts.dll</HintPath>
+    </Reference>
+    <Reference Include="Inno.EditorScripts">
+      <HintPath>$(CanvasScriptOutput)/Inno.EditorScripts.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="../../../InnoEngine/src/composition/editor/host/Inno.Editor.Build.Cli/Inno.Editor.Build.Cli.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="../../../InnoEngine/src/content/assets/Inno.Assets/Inno.Assets.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/content/assets/Inno.Assets.Pipeline/Inno.Assets.Pipeline.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/content/references/Inno.References/Inno.References.csproj" />
@@ -64,6 +68,9 @@
     <ProjectReference Include="../../../InnoEngine/src/adapters/ui/Inno.Adapter.UI.RmlUi.Authoring/Inno.Adapter.UI.RmlUi.Authoring.csproj" />
     <ProjectReference Include="../../../InnoEngine/build/toolchains/Inno.Build.Toolchains.Bgfx.Tools/Inno.Build.Toolchains.Bgfx.Tools.csproj" />
   </ItemGroup>
+  <Target Name="CompileCanvasProjectScripts" BeforeTargets="ResolveAssemblyReferences" DependsOnTargets="ResolveProjectReferences">
+    <Exec Command="&quot;$(DotNetHost)&quot; &quot;$(CanvasCompiler)&quot; scripts --project &quot;$(MSBuildProjectDirectory)/../..&quot; --output &quot;$(CanvasScriptOutput)&quot;" />
+  </Target>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="xunit" Version="2.6.6" />

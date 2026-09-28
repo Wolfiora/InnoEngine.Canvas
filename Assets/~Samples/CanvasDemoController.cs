@@ -1,14 +1,8 @@
-#if INNO_ENGINE_VALIDATION
-using Inno.Core.Serialization;
-using Inno.Extensibility.Types;
-using Inno.Scene;
-using Inno.UI;
-#else
 using InnoEngine.Reflection;
 using InnoEngine.Scene;
 using InnoEngine.Serialization;
 using InnoEngine.UI;
-#endif
+using System;
 
 namespace Inno.Canvas.Samples;
 
@@ -18,20 +12,24 @@ public sealed class CanvasDemoController : GameBehavior
 {
     private int m_clicks;
     private bool m_faded;
+    private IDisposable? m_subscription;
 
     /// <inheritdoc />
-    protected override void Update()
+    protected override void Start()
     {
-        if (!gameObject.TryGetComponent(out Canvas? canvas) || canvas is null || !canvas.isReady)
+        if (!gameObject.TryGetComponent(out Canvas? canvas) || canvas is null)
             return;
-        foreach (UiEvent uiEvent in canvas.DrainEvents())
+        m_subscription = canvas.Listen(uiEvent =>
         {
             if (uiEvent.type != UiEventType.Click || uiEvent.targetId != "launch")
-                continue;
+                return;
             m_clicks++;
             m_faded = !m_faded;
             canvas.SetText("status", $"Clicks: {m_clicks}");
             canvas.SetClass("message", "faded", m_faded);
-        }
+        });
     }
+
+    /// <inheritdoc />
+    protected override void OnDestroy() => m_subscription?.Dispose();
 }

@@ -2,17 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-#if INNO_ENGINE_VALIDATION
-using AssetsApi = Inno.Assets.Assets;
-using Inno.Core.Identity;
-using Inno.Core.Logging;
-using Inno.Core.Mathematics;
-using Inno.Core.Input;
-using Inno.Core.Settings;
-using Inno.Rendering;
-using Inno.Scene;
-using Inno.UI;
-#else
 using AssetsApi = InnoEngine.Assets.Assets;
 using InnoEngine.Core;
 using InnoEngine.Logging;
@@ -22,7 +11,6 @@ using InnoEngine.Settings;
 using InnoEngine.Rendering;
 using InnoEngine.Scene;
 using InnoEngine.UI;
-#endif
 
 namespace Inno.Canvas;
 
@@ -323,12 +311,13 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
             ui.Update(context, new UiInputSnapshot(position, input.scrollDelta, input.modifiers,
                 input.keysPressed, input.keysReleased, input.buttonsPressed,
                 input.buttonsReleased, input.textInput));
-            owner.PublishEvents(ui.DrainEvents(context));
+            IReadOnlyList<UiEvent> events = ui.DrainEvents(context);
             drawable.Update(ui.Render(context), layout.width, layout.height,
                 planeTransform);
             if (input.buttonsReleased.Count > 0)
                 m_captured = false;
             m_routedInput = null;
+            owner.PublishEvents(events);
         }
 
         private void Merge(RenderOutputInput input, Vector2 localPosition)

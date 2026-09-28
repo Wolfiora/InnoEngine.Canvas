@@ -1,8 +1,4 @@
-#if INNO_ENGINE_VALIDATION
-using Inno.Rendering;
-#else
 using InnoEngine.Rendering;
-#endif
 
 namespace Inno.Canvas;
 

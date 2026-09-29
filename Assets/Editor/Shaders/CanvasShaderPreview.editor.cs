@@ -7,7 +7,9 @@ using InnoEngine.Rendering;
 
 namespace Inno.Canvas;
 
-/// <summary>Previews the Canvas material contract on an isolated textured UI quad.</summary>
+/// <summary>
+/// Previews the Canvas material contract on an isolated textured UI quad.
+/// </summary>
 [ShaderPreviewProvider("inno.canvas.material")]
 public sealed class CanvasShaderPreview : ShaderPreviewProvider
 {
@@ -21,14 +23,20 @@ public sealed class CanvasShaderPreview : ShaderPreviewProvider
     }
 }
 
-/// <summary>Draws an isolated compiled Canvas shader without opening a UI context or Scene.</summary>
+/// <summary>
+/// Draws an isolated compiled Canvas shader without opening a UI context or Scene.
+/// </summary>
 [RenderPipelineExtension(pipelineId)]
 public sealed class CanvasShaderPreviewPipeline : RenderPipeline
 {
-    /// <summary>Identifies the Editor-only Canvas shader preview pipeline.</summary>
+    /// <summary>
+    /// Identifies the Editor-only Canvas shader preview pipeline.
+    /// </summary>
     public const string pipelineId = "inno.canvas.shader-preview";
 
-    /// <summary>Gets the frame-only preview input channel.</summary>
+    /// <summary>
+    /// Gets the frame-only preview input channel.
+    /// </summary>
     public static RenderDataChannelId channel => new(pipelineId);
 
     private static readonly RenderBindingId s_textureBinding = new("s_canvasTexture");
@@ -68,15 +76,20 @@ public sealed class CanvasShaderPreviewPipeline : RenderPipeline
 
         var data = new DrawData(material, vertices, indices, texture, context.request.viewport);
         RasterPassBuilder pass = context.graph.AddRasterPass("Canvas shader preview", new(pipelineId), data,
-            static (value, render) => Draw(value, render.commands));
+            static (
+                value,
+                render
+            ) => Draw(value, render.commands));
         pass.SetViewTransform(s_identity, s_identity);
         pass.UseColorAttachment(context.outputTexture, 0, RenderLoadAction.Clear, RenderStoreAction.Store,
             new(0.055f, 0.055f, 0.065f, 1f));
         context.graph.MarkOutput(context.outputTexture);
     }
 
-    private static void Draw(DrawData data, RenderCommandEncoder commands)
-    {
+    private static void Draw(
+        DrawData data,
+        RenderCommandEncoder commands
+    ) {
         commands.SetViewport(0, 0, data.viewport.width, data.viewport.height);
         data.material.Bind(commands);
         if (data.material.UsesBinding(s_textureBinding, RenderShaderBindingKind.Texture))
@@ -110,18 +123,23 @@ public sealed class CanvasShaderPreviewPipeline : RenderPipeline
     {
         var pixels = new byte[8 * 8 * 4];
         for (int y = 0; y < 8; y++)
-        for (int x = 0; x < 8; x++)
-        {
-            int offset = (y * 8 + x) * 4;
-            bool border = x is 0 or 7 || y is 0 or 7;
-            pixels[offset] = border ? (byte)112 : (byte)77;
-            pixels[offset + 1] = border ? (byte)140 : (byte)114;
-            pixels[offset + 2] = byte.MaxValue;
-            pixels[offset + 3] = byte.MaxValue;
-        }
+            for (int x = 0; x < 8; x++)
+            {
+                int offset = (y * 8 + x) * 4;
+                bool border = x is 0 or 7 || y is 0 or 7;
+                pixels[offset] = border ? (byte)112 : (byte)77;
+                pixels[offset + 1] = border ? (byte)140 : (byte)114;
+                pixels[offset + 2] = byte.MaxValue;
+                pixels[offset + 3] = byte.MaxValue;
+            }
         return pixels;
     }
 
-    private sealed record DrawData(RenderMaterialPass material, PersistentBufferHandle vertices,
-        PersistentBufferHandle indices, PersistentTextureHandle texture, RenderViewport viewport);
+    private sealed record DrawData(
+        RenderMaterialPass material,
+        PersistentBufferHandle vertices,
+        PersistentBufferHandle indices,
+        PersistentTextureHandle texture,
+        RenderViewport viewport
+    );
 }

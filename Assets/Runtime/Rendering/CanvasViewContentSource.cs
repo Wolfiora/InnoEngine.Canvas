@@ -14,7 +14,9 @@ using InnoEngine.UI;
 
 namespace Inno.Canvas;
 
-/// <summary>Publishes transformed retained UI planes to any compatible rendering model.</summary>
+/// <summary>
+/// Publishes transformed retained UI planes to any compatible rendering model.
+/// </summary>
 [ViewContentSourceExtension("inno.canvas.world-content")]
 public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFrameSource
 {
@@ -26,8 +28,10 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
     private bool m_disposed;
 
     /// <inheritdoc />
-    public void Collect(ViewContentContext context, IViewContentSink sink)
-    {
+    public void Collect(
+        ViewContentContext context,
+        IViewContentSink sink
+    ) {
         ObjectDisposedException.ThrowIf(m_disposed, this);
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(sink);
@@ -115,8 +119,10 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
         state.Dispose();
     }
 
-    private CanvasState GetOrCreate(Canvas canvas, CanvasLayout layout)
-    {
+    private CanvasState GetOrCreate(
+        Canvas canvas,
+        CanvasLayout layout
+    ) {
         RuntimeIdentity id = canvas.identity.runtimeIdentity
             ?? throw new InvalidOperationException("Canvas has no live runtime identity.");
         if (m_states.TryGetValue(id, out CanvasState? existing) &&
@@ -150,8 +156,12 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
         return state;
     }
 
-    private static bool TryDescribe(Canvas canvas, IReadOnlyList<RenderView> views, Matrix transform, out CanvasLayout layout)
-    {
+    private static bool TryDescribe(
+        Canvas canvas,
+        IReadOnlyList<RenderView> views,
+        Matrix transform,
+        out CanvasLayout layout
+    ) {
         float worldWidth = Vector3.TransformNormal(Vector3.RIGHT, transform).Length();
         float worldHeight = Vector3.TransformNormal(Vector3.UP, transform).Length();
         float logicalWidth = canvas.referenceWidth;
@@ -186,8 +196,12 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
         return true;
     }
 
-    private static float ProjectedLength(RenderView view, Matrix localToWorld, Vector3 start, Vector3 end)
-    {
+    private static float ProjectedLength(
+        RenderView view,
+        Matrix localToWorld,
+        Vector3 start,
+        Vector3 end
+    ) {
         Matrix clip = view.projectionMatrix * view.viewMatrix * localToWorld;
         Vector4 a = Vector4.Transform(new Vector4(start.x, start.y, start.z, 1f), clip);
         Vector4 b = Vector4.Transform(new Vector4(end.x, end.y, end.z, 1f), clip);
@@ -198,8 +212,13 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
         return MathF.Sqrt(dx * dx + dy * dy);
     }
 
-    private readonly record struct CanvasLayout(int logicalWidth, int logicalHeight,
-        int width, int height, float density);
+    private readonly record struct CanvasLayout(
+        int logicalWidth,
+        int logicalHeight,
+        int width,
+        int height,
+        float density
+    );
 
     private sealed class CanvasState(
         Canvas owner,
@@ -209,7 +228,8 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
         CanvasLayout layout,
         CanvasViewDrawable drawable,
         Guid documentId,
-        long documentVersion) : IViewPointerTarget, IDisposable
+        long documentVersion
+    ) : IViewPointerTarget, IDisposable
     {
         internal Canvas owner { get; } = owner;
         internal IUiService ui { get; } = ui;
@@ -232,8 +252,11 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
 
         public void SetKeyboardFocus(bool focused) => m_keyboardFocused = focused;
 
-        public bool TryHit(RenderView view, RenderOutputInput input, out Vector2 localPosition)
-        {
+        public bool TryHit(
+            RenderView view,
+            RenderOutputInput input,
+            out Vector2 localPosition
+        ) {
             localPosition = default;
             if (!input.pointerInside && !m_captured)
                 return false;
@@ -277,8 +300,11 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
             return m_captured || ui.HasElementAtPoint(context, localPosition);
         }
 
-        public void Advance(RenderOutputInput input, Vector2 localPosition, ulong frameIndex)
-        {
+        public void Advance(
+            RenderOutputInput input,
+            Vector2 localPosition,
+            ulong frameIndex
+        ) {
             if (!input.interactionEnabled)
             {
                 m_captured = false;
@@ -320,8 +346,10 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
             owner.PublishEvents(events);
         }
 
-        private void Merge(RenderOutputInput input, Vector2 localPosition)
-        {
+        private void Merge(
+            RenderOutputInput input,
+            Vector2 localPosition
+        ) {
             if (m_routedInput is RenderOutputInput pending)
             {
                 bool useCurrentPointer = input.pointerInside || input.buttonsPressed.Count > 0

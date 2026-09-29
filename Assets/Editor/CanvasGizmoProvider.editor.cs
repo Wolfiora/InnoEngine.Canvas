@@ -6,13 +6,17 @@ using InnoEngine.Settings;
 
 namespace Inno.Canvas;
 
-/// <summary>Contributes selectable world Canvas icons and selected virtual-resolution bounds.</summary>
+/// <summary>
+/// Contributes selectable world Canvas icons and selected virtual-resolution bounds.
+/// </summary>
 [EditorGizmoProviderExtension("inno.canvas.scene-gizmos")]
 public sealed class CanvasGizmoProvider : EditorGizmoProvider
 {
     /// <inheritdoc />
-    public override void Collect(EditorGizmoContext context, IEditorGizmoSink sink)
-    {
+    public override void Collect(
+        EditorGizmoContext context,
+        IEditorGizmoSink sink
+    ) {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(sink);
         float pixelsPerUnit = Settings.Get<CanvasProjectSettings>(CanvasProjectSettings.id)

@@ -6,7 +6,9 @@ using System;
 
 namespace Inno.Canvas.Samples;
 
-/// <summary>Demonstrates button events, HUD text changes, and an RCSS fade.</summary>
+/// <summary>
+/// Demonstrates button events, HUD text changes, and an RCSS fade.
+/// </summary>
 [StableTypeId("600db367-c503-438a-a2c4-bf3da741e9a9")]
 public sealed class CanvasDemoController : GameBehavior
 {

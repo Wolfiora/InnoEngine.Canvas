@@ -21,26 +21,40 @@ public sealed class CanvasShaderTemplate : ShaderGraphTemplate
     private const string C_FRAGMENT_PATH = "Shaders/CanvasFragment.ishadersource";
 
     /// <inheritdoc />
-    public override GraphDocument Create(SerializationRegistry serialization, SerializationContext context)
-    {
+    public override GraphDocument Create(
+        SerializationRegistry serialization,
+        SerializationContext context
+    ) {
         ArgumentNullException.ThrowIfNull(serialization);
         ShaderFunctionAsset vertex = AssetsApi.Load<ShaderFunctionAsset>(AssetsApi.LocalPath(C_VERTEX_PATH));
         ShaderFunctionAsset fragment = AssetsApi.Load<ShaderFunctionAsset>(AssetsApi.LocalPath(C_FRAGMENT_PATH));
         return Create(vertex, fragment, serialization, context);
     }
 
-    /// <summary>Creates a detached Canvas shader graph from explicitly resolved stage functions.</summary>
-    /// <param name="vertex">The Canvas vertex function asset.</param>
-    /// <param name="fragment">The Canvas fragment function asset.</param>
-    /// <param name="serialization">The current authoring converter registry.</param>
-    /// <param name="context">The complete owner reference context.</param>
-    /// <returns>A complete graph implementing the Canvas material contract.</returns>
+    /// <summary>
+    /// Creates a detached Canvas shader graph from explicitly resolved stage functions.
+    /// </summary>
+    /// <param name="vertex">
+    /// The Canvas vertex function asset.
+    /// </param>
+    /// <param name="fragment">
+    /// The Canvas fragment function asset.
+    /// </param>
+    /// <param name="serialization">
+    /// The current authoring converter registry.
+    /// </param>
+    /// <param name="context">
+    /// The complete owner reference context.
+    /// </param>
+    /// <returns>
+    /// A complete graph implementing the Canvas material contract.
+    /// </returns>
     public static GraphDocument Create(
         ShaderFunctionAsset vertex,
         ShaderFunctionAsset fragment,
         SerializationRegistry serialization,
-        SerializationContext context)
-    {
+        SerializationContext context
+    ) {
         Validate(vertex, nameof(vertex));
         Validate(fragment, nameof(fragment));
         ArgumentNullException.ThrowIfNull(serialization);
@@ -131,8 +145,8 @@ public sealed class CanvasShaderTemplate : ShaderGraphTemplate
         GraphNodeRecord StageOutput(
             string id,
             ShaderStage stage,
-            ShaderGraphOutput[] outputs)
-        {
+            ShaderGraphOutput[] outputs
+        ) {
             GraphNodeRecord node = Node(id, ShaderGraphDocument.outputDefinitionId, null);
             Set(node, ShaderGraphDocument.settingsKey, new ShaderGraphStageSettings
             {
@@ -148,8 +162,8 @@ public sealed class CanvasShaderTemplate : ShaderGraphTemplate
             ShaderStage stage,
             ShaderIrInputKind kind,
             string semantic = "",
-            int location = 0)
-        {
+            int location = 0
+        ) {
             string stageId = stage.ToString();
             GraphNodeRecord node = Node(id, "inno.shader.stage-input", stageId);
             Set(node, ShaderGraphDocument.settingsKey, new ShaderGraphInputSettings
@@ -167,8 +181,8 @@ public sealed class CanvasShaderTemplate : ShaderGraphTemplate
             string id,
             ShaderStage stage,
             ShaderFunctionAsset function,
-            GraphNodeRecord output)
-        {
+            GraphNodeRecord output
+        ) {
             GraphNodeRecord node = Node(id, "inno.shader.source", output.id.value);
             Set(node, ShaderGraphDocument.stageKey, stage.ToString());
             Set(node, "sourceId", function.identity.persistentId);
@@ -177,8 +191,11 @@ public sealed class CanvasShaderTemplate : ShaderGraphTemplate
             return node;
         }
 
-        GraphNodeRecord Node(string id, string definitionId, string? stage)
-        {
+        GraphNodeRecord Node(
+            string id,
+            string definitionId,
+            string? stage
+        ) {
             var node = new GraphNodeRecord(new GraphNodeId(id), definitionId)
             {
                 position = new GraphPosition(
@@ -191,18 +208,29 @@ public sealed class CanvasShaderTemplate : ShaderGraphTemplate
             return node;
         }
 
-        void Set<T>(GraphNodeRecord node, string key, T value)
+        void Set<T>(
+            GraphNodeRecord node,
+            string key,
+            T value
+        )
             => node.SetValue(key, ShaderGraphDocument.Encode(value, serialization, context));
 
-        void Connect(GraphNodeRecord source, string output, GraphNodeRecord target, string input)
+        void Connect(
+            GraphNodeRecord source,
+            string output,
+            GraphNodeRecord target,
+            string input
+        )
             => graph.AddEdge(new GraphEdgeRecord(
                 new GraphEdgeId($"{source.id.value}.{output}->{target.id.value}.{input}"),
                 new GraphEndpoint(source.id, new GraphPortId(output)),
                 new GraphEndpoint(target.id, new GraphPortId(input))));
     }
 
-    private static void Validate(ShaderFunctionAsset function, string parameter)
-    {
+    private static void Validate(
+        ShaderFunctionAsset function,
+        string parameter
+    ) {
         ArgumentNullException.ThrowIfNull(function, parameter);
         if (function.isMissing
             || function.identity.persistentId == Guid.Empty

@@ -38,15 +38,21 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
     private IRenderResourceService? m_resources;
     private bool m_disposed;
 
-    internal CanvasViewDrawable(string scope, MaterialAsset material)
-    {
+    internal CanvasViewDrawable(
+        string scope,
+        MaterialAsset material
+    ) {
         ArgumentException.ThrowIfNullOrWhiteSpace(scope);
         m_scope = scope;
         m_material = material ?? throw new ArgumentNullException(nameof(material));
     }
 
-    internal void Update(UiRenderFrame frame, int width, int height, Matrix transform)
-    {
+    internal void Update(
+        UiRenderFrame frame,
+        int width,
+        int height,
+        Matrix transform
+    ) {
         ObjectDisposedException.ThrowIf(m_disposed, this);
         m_frame = frame ?? throw new ArgumentNullException(nameof(frame));
         m_width = width;
@@ -73,8 +79,11 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
         }
     }
 
-    public bool TryPrepare(RenderPipelineContext context, RenderView view, out IPreparedViewDrawable? prepared)
-    {
+    public bool TryPrepare(
+        RenderPipelineContext context,
+        RenderView view,
+        out IPreparedViewDrawable? prepared
+    ) {
         ObjectDisposedException.ThrowIf(m_disposed, this);
         ArgumentNullException.ThrowIfNull(context);
         _ = view;
@@ -150,7 +159,10 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
         {
             foreach (RenderPersistentResourceId id in m_resourceIds)
             {
-                try { m_resources.Release(id); }
+                try
+                {
+                    m_resources.Release(id);
+                }
                 catch (ObjectDisposedException) { }
             }
         }
@@ -161,8 +173,11 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
         m_disposed = true;
     }
 
-    private GeometryState GetGeometry(int index, UiDrawCommand draw, UiMeshUpdate mesh)
-    {
+    private GeometryState GetGeometry(
+        int index,
+        UiDrawCommand draw,
+        UiMeshUpdate mesh
+    ) {
         UiClipRectangle clip = draw.scissorEnabled
             ? draw.scissor
             : new UiClipRectangle(0, 0, m_width, m_height);
@@ -237,8 +252,8 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
         IReadOnlyList<UiVertex> polygon,
         Func<UiVertex, float> coordinate,
         float boundary,
-        bool keepGreater)
-    {
+        bool keepGreater
+    ) {
         var result = new List<UiVertex>(polygon.Count + 2);
         if (polygon.Count == 0)
             return result;
@@ -263,8 +278,11 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
         return result;
     }
 
-    private static UiVertex Interpolate(UiVertex a, UiVertex b, float t)
-    {
+    private static UiVertex Interpolate(
+        UiVertex a,
+        UiVertex b,
+        float t
+    ) {
         uint color = 0;
         for (int shift = 0; shift < 32; shift += 8)
         {
@@ -296,8 +314,10 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
     private RenderPersistentResourceId IndexId(int index) => new($"{m_scope}.draw.{index}.indices");
     private RenderPersistentResourceId TextureId(ulong id) => new($"{m_scope}.texture.{id}");
 
-    private static ulong Hash(ReadOnlySpan<byte> vertices, ReadOnlySpan<byte> indices)
-    {
+    private static ulong Hash(
+        ReadOnlySpan<byte> vertices,
+        ReadOnlySpan<byte> indices
+    ) {
         ulong value = 14695981039346656037UL;
         foreach (byte item in vertices)
             value = unchecked((value ^ item) * 1099511628211UL);
@@ -312,7 +332,8 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
         UiClipRectangle clip,
         int width,
         int height,
-        Matrix transform);
+        Matrix transform
+    );
 
     private sealed record GeometryState(
         GeometryKey key,
@@ -321,18 +342,21 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
         int vertexCount,
         int indexCount,
         bool index32,
-        long revision);
+        long revision
+    );
 
     private readonly record struct PreparedCommand(
         PersistentBufferHandle vertices,
         PersistentBufferHandle indices,
         int indexCount,
-        PersistentTextureHandle texture);
+        PersistentTextureHandle texture
+    );
 
     private sealed class PreparedDrawable(
         RenderMaterialPass material,
         PreparedCommand[] draws,
-        bool usesTexture) : IPreparedViewDrawable
+        bool usesTexture
+    ) : IPreparedViewDrawable
     {
         public void Encode(RenderCommandEncoder commands)
         {

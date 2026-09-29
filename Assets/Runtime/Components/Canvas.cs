@@ -28,14 +28,20 @@ public sealed class Canvas : GameBehavior
     private int m_referenceWidth = 800;
     private int m_referenceHeight = 450;
 
-    /// <summary>Creates a Canvas with an isolated Core event hub for its document interactions.</summary>
+    /// <summary>
+    /// Creates a Canvas with an isolated Core event hub for its document interactions.
+    /// </summary>
     public Canvas() => m_events = m_eventDispatcher.CreateHub();
 
-    /// <summary>Gets or sets the imported RML document displayed by this canvas.</summary>
+    /// <summary>
+    /// Gets or sets the imported RML document displayed by this canvas.
+    /// </summary>
     [SerializableProperty]
     public UiDocumentAsset? document { get; set; }
 
-    /// <summary>Gets or sets the fixed horizontal RML layout extent in logical pixels.</summary>
+    /// <summary>
+    /// Gets or sets the fixed horizontal RML layout extent in logical pixels.
+    /// </summary>
     [SerializableProperty]
     public int referenceWidth
     {
@@ -44,7 +50,9 @@ public sealed class Canvas : GameBehavior
             ? value : throw new ArgumentOutOfRangeException(nameof(value));
     }
 
-    /// <summary>Gets or sets the fixed vertical RML layout extent in logical pixels.</summary>
+    /// <summary>
+    /// Gets or sets the fixed vertical RML layout extent in logical pixels.
+    /// </summary>
     [SerializableProperty]
     public int referenceHeight
     {
@@ -53,66 +61,147 @@ public sealed class Canvas : GameBehavior
             ? value : throw new ArgumentOutOfRangeException(nameof(value));
     }
 
-    /// <summary>Gets whether the plugin currently owns a live UI context for this component.</summary>
+    /// <summary>
+    /// Gets whether the plugin currently owns a live UI context for this component.
+    /// </summary>
     public bool isReady => m_context.isValid && m_loadedDocument.isValid;
 
     /// <summary>
     /// Subscribes to document interactions through this Canvas's Core event hub.
     /// </summary>
-    /// <param name="handler">The callback invoked for each document event.</param>
-    /// <param name="priority">Listener priority within this Canvas; higher values run first.</param>
-    /// <returns>A token that removes the listener when disposed.</returns>
-    /// <exception cref="ArgumentNullException">The handler is null.</exception>
-    /// <exception cref="InvalidOperationException">The Canvas has been destroyed.</exception>
-    public IDisposable Listen(Action<UiEvent> handler, int priority = 0)
-    {
+    /// <param name="handler">
+    /// The callback invoked for each document event.
+    /// </param>
+    /// <param name="priority">
+    /// Listener priority within this Canvas; higher values run first.
+    /// </param>
+    /// <returns>
+    /// A token that removes the listener when disposed.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// The handler is null.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// The Canvas has been destroyed.
+    /// </exception>
+    public IDisposable Listen(
+        Action<UiEvent> handler,
+        int priority = 0
+    ) {
         ArgumentNullException.ThrowIfNull(handler);
         return m_events.Listen<CanvasUiEvent>(uiEvent => handler(uiEvent.value), priority);
     }
 
-    /// <summary>Replaces an element's children with escaped plain text.</summary>
-    /// <param name="elementId">The target element identifier.</param>
-    /// <param name="text">The replacement text.</param>
-    /// <returns><see langword="true"/> when the active document contained the target element.</returns>
-    /// <exception cref="InvalidOperationException">The Canvas has not created its runtime document.</exception>
-    public bool SetText(string elementId, string text)
-        => UiApi.SetText(RequireContext(), RequireDocument(), elementId, text);
+    /// <summary>
+    /// Replaces an element's children with escaped plain text.
+    /// </summary>
+    /// <param name="elementId">
+    /// The target element identifier.
+    /// </param>
+    /// <param name="text">
+    /// The replacement text.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> when the active document contained the target element.
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// The Canvas has not created its runtime document.
+    /// </exception>
+    public bool SetText(
+        string elementId,
+        string text
+    ) => UiApi.SetText(RequireContext(), RequireDocument(), elementId, text);
 
-    /// <summary>Replaces an element's children with explicitly language-tagged document content.</summary>
-    /// <param name="elementId">The target element identifier.</param>
-    /// <param name="content">The replacement language-tagged fragment.</param>
-    /// <returns><see langword="true"/> when the active document contained the target element.</returns>
-    public bool SetContent(string elementId, UiDocumentFragment content)
+    /// <summary>
+    /// Replaces an element's children with explicitly language-tagged document content.
+    /// </summary>
+    /// <param name="elementId">
+    /// The target element identifier.
+    /// </param>
+    /// <param name="content">
+    /// The replacement language-tagged fragment.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> when the active document contained the target element.
+    /// </returns>
+    public bool SetContent(
+        string elementId,
+        UiDocumentFragment content
+    )
         => UiApi.SetContent(RequireContext(), RequireDocument(), elementId, content);
 
-    /// <summary>Sets one attribute on an element in the active document.</summary>
-    /// <param name="elementId">The target element identifier.</param>
-    /// <param name="name">The attribute name.</param>
-    /// <param name="value">The attribute value.</param>
-    /// <returns><see langword="true"/> when the active document contained the target element.</returns>
-    /// <exception cref="InvalidOperationException">The Canvas has not created its runtime document.</exception>
-    public bool SetAttribute(string elementId, string name, string value)
+    /// <summary>
+    /// Sets one attribute on an element in the active document.
+    /// </summary>
+    /// <param name="elementId">
+    /// The target element identifier.
+    /// </param>
+    /// <param name="name">
+    /// The attribute name.
+    /// </param>
+    /// <param name="value">
+    /// The attribute value.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> when the active document contained the target element.
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// The Canvas has not created its runtime document.
+    /// </exception>
+    public bool SetAttribute(
+        string elementId,
+        string name,
+        string value
+    )
         => UiApi.SetAttribute(RequireContext(), RequireDocument(), elementId, name, value);
 
-    /// <summary>Activates or deactivates one class on an element in the active document.</summary>
-    /// <param name="elementId">The target element identifier.</param>
-    /// <param name="className">The class name.</param>
-    /// <param name="active">Whether the class should be active.</param>
-    /// <returns><see langword="true"/> when the active document contained the target element.</returns>
-    /// <exception cref="InvalidOperationException">The Canvas has not created its runtime document.</exception>
-    public bool SetClass(string elementId, string className, bool active)
+    /// <summary>
+    /// Activates or deactivates one class on an element in the active document.
+    /// </summary>
+    /// <param name="elementId">
+    /// The target element identifier.
+    /// </param>
+    /// <param name="className">
+    /// The class name.
+    /// </param>
+    /// <param name="active">
+    /// Whether the class should be active.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> when the active document contained the target element.
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// The Canvas has not created its runtime document.
+    /// </exception>
+    public bool SetClass(
+        string elementId,
+        string className,
+        bool active
+    )
         => UiApi.SetClass(RequireContext(), RequireDocument(), elementId, className, active);
 
-    /// <summary>Registers one in-memory texture source for use by the active RML document.</summary>
-    /// <param name="source">The source name referenced by RML.</param>
-    /// <param name="texture">The immutable RGBA8 texture.</param>
-    /// <exception cref="InvalidOperationException">The Canvas has not created its runtime context.</exception>
-    public void RegisterTexture(string source, UiTextureData texture)
-        => UiApi.RegisterTexture(RequireContext(), source, texture);
+    /// <summary>
+    /// Registers one in-memory texture source for use by the active RML document.
+    /// </summary>
+    /// <param name="source">
+    /// The source name referenced by RML.
+    /// </param>
+    /// <param name="texture">
+    /// The immutable RGBA8 texture.
+    /// </param>
+    /// <exception cref="InvalidOperationException">
+    /// The Canvas has not created its runtime context.
+    /// </exception>
+    public void RegisterTexture(
+        string source,
+        UiTextureData texture
+    ) => UiApi.RegisterTexture(RequireContext(), source, texture);
 
     internal (IUiService ui, UiContextHandle context, UiDocumentHandle loadedDocument) EnsureDocument(
-        int width, int height, float density)
-    {
+        int width,
+        int height,
+        float density
+    ) {
         UiDocumentAsset source = document is { isMissing: false, source: not null } available
             ? available : throw new InvalidOperationException("Canvas has no usable UI document.");
         IUiService ui = UiExecutionContext.current;
@@ -168,7 +257,10 @@ public sealed class Canvas : GameBehavior
         m_eventDispatcher.DiscardPending();
         if (m_ui is not null && m_context.isValid)
         {
-            try { m_ui.DestroyContext(m_context); }
+            try
+            {
+                m_ui.DestroyContext(m_context);
+            }
             catch (ObjectDisposedException) { }
         }
         m_ui = null;

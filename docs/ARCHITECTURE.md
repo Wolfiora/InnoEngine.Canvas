@@ -23,7 +23,7 @@ Inno.Canvas                     RML、字体、世界画布、UI 绘制与事件
 ## 一帧中的数据流
 
 1. Editor/Player 提供 `ContentReadScope`、输出 viewport 和输入。Rendering2D 从场景的 `Rendering2DSceneSystem` 与 Camera2D 建立 View。
-2. Canvas `IViewContentSource` 读取 Canvas 所在对象的完整父子 Transform。局部画布为以原点为中心的单位 XY 平面，世界 X/Y 轴长乘项目级 `logicalPixelsPerWorldUnit` 得到 RML 逻辑尺寸；相机投影只决定输出像素与字形栅格密度。
+2. Canvas `IViewContentSource` 读取 Canvas 所在对象的完整父子 Transform。`referenceWidth`、`referenceHeight` 决定 RML 逻辑布局尺寸，除以项目级 `logicalPixelsPerWorldUnit` 得到以原点为中心的局部 XY 平面尺寸，再应用父子 Transform；相机投影只决定输出像素与字形栅格密度。
 3. Rendering2D 收集精灵及外部 `ViewContentItem`，应用其 SortingGroup2D 规则统一排序。Canvas 是一个内部顺序固定的透明项，可处于精灵之间。排序后只合并相邻精灵批次。
 4. 已捕获指针的内容项优先接收后续输入；其余目标按绘制顺序反向命中。指针按下决定键盘焦点，焦点 Canvas 在指针移出后继续接收按键和文字。Canvas 射线命中自身平面，将交点转换到局部 RML 坐标。所有 View 先路由输入，`IViewContentFrameSource.CompleteFrame` 再统一推进每个文档 Context 一次，并将 DOM 事件放入 Core EventDispatcher；Canvas 的下一次 GameBehavior.Update 在运行会话作用域内派发回调。Canvas 绘制器将 RML 网格和图集直接送入 2D 场景颜色阶段，随后才进行后处理。
 5. 扩展代际退休时，Canvas Context、字形纹理、字体资产 lease 与绘制资源释放；RmlUi 原生字体注册由 UI backend 在自身退休时清空。Editor/Player 输出目标归 Host 所有。Shader/Material 预览使用专用请求，不属于场景模型。
@@ -31,7 +31,7 @@ Inno.Canvas                     RML、字体、世界画布、UI 绘制与事件
 ## 作者与运行时约束
 
 - Canvas 组件只保存 `document`。字体由 RML 的 `@font-face` 声明，资源在导入时成为依赖；`font-family` 选族，`font-weight` 选面，`font-size` 定大小。文档使用隔离的后端字体名。未知字体与 `none` 不借用其他文档的旧字体。
-- Canvas 的 `SetText`、`SetClass` 和 `DrainEvents()` 用于 HUD 更新、点击及 RCSS 动画。事件按顺序累积，消费后清空，避免渲染帧与脚本帧频率不同时重复处理。样例把按钮事件与 `opacity` transition 串起来。世界 HUD 可以作为 Camera 子对象；它仍是受世界排序与遮挡规则控制的画布。
+- Canvas 的 `SetText`、`SetClass` 和 `Listen(handler)` 用于 HUD 更新、点击及 RCSS 动画。内部在渲染输出阶段读取 UI 事件，交给 Core EventDispatcher，在下一次脚本更新中派发；订阅 token 由脚本释放。样例把按钮事件与 `opacity` transition 串起来。世界 HUD 可以作为 Camera 子对象；它仍是受世界排序与遮挡规则控制的画布。
 - 默认路径不为每个 Canvas 创建 RenderTexture。局部裁剪后的网格和字形图集直接绘制；纹理只应服务明确的缓存或特殊效果。
 - GameView/SceneView 是输出与编辑操作的适配器，不拥有第二套场景合成。SceneView 可以使用插件提供的编辑相机，GameView 使用场景相机。
 

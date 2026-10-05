@@ -7,7 +7,7 @@ Canvas 是独立 UI 插件：RML 文档、字体依赖、DOM 事件和世界空�
 本仓库独立安装和构建，不在 `Plugins/` 中引用 Rendering2D。`Assets/~Samples/SampleScene.iscene` 只包含默认 800 × 450 逻辑像素、8 × 4.5 世界单位的 Canvas 和按钮控制脚本；点击按钮会更新计数并切换文字的 RCSS 淡出效果。在同时安装 Canvas 与 Rendering2D 的 `TestProject` 中配置 Camera2D 和 Rendering2DSceneSystem 后进行可视测试。安装态样例可只读打开，修改时先使用 **Import Sample**。Canvas 单独安装时文档 API 仍可工作，但没有渲染模型，GameView 不出图。
 
 ```bash
-/Users/aaronliao/.dotnet/dotnet run \
+dotnet run \
   --project ../InnoEngine/src/composition/editor/host/Inno.Editor.Application -- .
 ```
 
@@ -22,9 +22,9 @@ Canvas 的 RML 根默认填满独立的 `referenceWidth × referenceHeight` 布�
 ## 验证与导出
 
 ```bash
-/Users/aaronliao/.dotnet/dotnet test Tests/InnoEngine.Canvas.Tests/InnoEngine.Canvas.Tests.csproj
-/Users/aaronliao/.dotnet/dotnet run \
-  --project ../InnoEngine/src/composition/editor/host/Inno.Editor.Build.Cli -- \
+dotnet test Tests/InnoEngine.Canvas.Tests/InnoEngine.Canvas.Tests.csproj
+dotnet run \
+  --project ../InnoEngine/build/cli/Inno.Build.Cli -- \
   plugin --project . --output Builds/InnoEngine.Canvas.iplugin \
   --display-name InnoEngine.Canvas
 ```

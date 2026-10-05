@@ -12,16 +12,12 @@
   </PropertyGroup>
   <PropertyGroup>
     <CanvasScriptOutput>$(MSBuildProjectDirectory)/obj/CanvasScripts</CanvasScriptOutput>
-    <CanvasCompiler>$(MSBuildProjectDirectory)/../../../InnoEngine/src/composition/editor/host/Inno.Editor.Build.Cli/bin/$(Configuration)/net9.0/Inno.Editor.Build.Cli.dll</CanvasCompiler>
+    <CanvasCompiler>$(MSBuildProjectDirectory)/../../../InnoEngine/build/cli/Inno.Build.Cli/bin/$(Configuration)/net9.0/Inno.Build.Cli.dll</CanvasCompiler>
     <DotNetHost Condition="!$([MSBuild]::IsOSPlatform('Windows'))">$(MSBuildToolsPath)/../../dotnet</DotNetHost>
     <DotNetHost Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(MSBuildToolsPath)/../../dotnet.exe</DotNetHost>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="*.cs" />
-    <None Include="../../Assets/**/*"
-          Exclude="../../Assets/**/*.cs"
-          Link="ProjectAssets/%(RecursiveDir)%(Filename)%(Extension)"
-          CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../InnoEngine/extern/bgfx/src/bgfx_shader.sh"
           Link="native/bgfx/includes/bgfx_shader.sh"
           CopyToOutputDirectory="PreserveNewest" />
@@ -42,7 +38,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../../../InnoEngine/src/composition/editor/host/Inno.Editor.Build.Cli/Inno.Editor.Build.Cli.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../../InnoEngine/build/cli/Inno.Build.Cli/Inno.Build.Cli.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="../../../InnoEngine/src/content/assets/Inno.Assets/Inno.Assets.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/content/assets/Inno.Assets.Pipeline/Inno.Assets.Pipeline.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/content/references/Inno.References/Inno.References.csproj" />
@@ -66,10 +62,20 @@
     <ProjectReference Include="../../../InnoEngine/src/services/ui/Inno.UI/Inno.UI.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/services/ui/Inno.UI.Assets/Inno.UI.Assets.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/adapters/ui/Inno.Adapter.UI.RmlUi.Authoring/Inno.Adapter.UI.RmlUi.Authoring.csproj" />
+    <ProjectReference Include="../../../InnoEngine/src/adapters/modules/Inno.Adapter.Modules.DotNet/Inno.Adapter.Modules.DotNet.csproj" />
+    <ProjectReference Include="../../../InnoEngine/src/adapters/serialization/Inno.Adapter.Serialization.DotNet/Inno.Adapter.Serialization.DotNet.csproj" />
     <ProjectReference Include="../../../InnoEngine/build/toolchains/Inno.Build.Toolchains.Bgfx.Tools/Inno.Build.Toolchains.Bgfx.Tools.csproj" />
   </ItemGroup>
   <Target Name="CompileCanvasProjectScripts" BeforeTargets="ResolveAssemblyReferences" DependsOnTargets="ResolveProjectReferences">
     <Exec Command="&quot;$(DotNetHost)&quot; &quot;$(CanvasCompiler)&quot; scripts --project &quot;$(MSBuildProjectDirectory)/../..&quot; --output &quot;$(CanvasScriptOutput)&quot;" />
+  </Target>
+  <Target Name="CollectCanvasProjectAssets" BeforeTargets="AssignTargetPaths" DependsOnTargets="CompileCanvasProjectScripts">
+    <ItemGroup>
+      <_CanvasProjectAsset Include="../../Assets/**/*" Exclude="../../Assets/**/*.cs" />
+      <None Include="@(_CanvasProjectAsset)"
+            Link="ProjectAssets/%(_CanvasProjectAsset.RecursiveDir)%(_CanvasProjectAsset.Filename)%(_CanvasProjectAsset.Extension)"
+            CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
   </Target>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />

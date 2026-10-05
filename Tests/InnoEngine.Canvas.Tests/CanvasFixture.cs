@@ -6,6 +6,8 @@ using System.Reflection;
 
 using Inno.Assets;
 using Inno.Assets.Pipeline;
+using Inno.Adapter.Modules.DotNet;
+using Inno.Adapter.Serialization.DotNet;
 using Inno.Adapter.UI.RmlUi.Authoring;
 using Inno.Build.Toolchains.Bgfx.Tools;
 using Inno.Core.Diagnostics;
@@ -49,12 +51,13 @@ internal sealed class CanvasFixture : IDisposable
         ];
         m_modules = new ModuleHost(new ModuleHostOptions
         {
+            catalogSource = new DotNetAssemblyCatalogSource(typeof(CanvasFixture).Assembly),
             cacheDirectory = Path.Combine(m_root, "Assemblies")
         });
         m_modules.Register("CanvasTests", [typeof(Canvas).Assembly]);
         GC.KeepAlive(requiredAssemblies);
-        m_types = new TypeCatalog(m_modules);
-        m_serialization = new SerializationRegistry(m_types);
+        m_types = new TypeCatalog(m_modules, new ReflectionTypeCatalogSource());
+        m_serialization = new SerializationRegistry(m_types, new ReflectionSerializationMetadataSource());
         m_diagnostics.RegisterSink(m_diagnosticSink);
         m_types.Rebuild();
         world = new SceneWorld(m_identities, m_types);

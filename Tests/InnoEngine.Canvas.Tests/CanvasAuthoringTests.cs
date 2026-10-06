@@ -9,6 +9,7 @@ using Inno.Rendering;
 using Inno.Rendering.Assets;
 using Inno.Rendering.Shaders;
 using Xunit;
+using Inno.Rendering.Assets.Authoring;
 
 namespace Inno.Canvas.Tests;
 

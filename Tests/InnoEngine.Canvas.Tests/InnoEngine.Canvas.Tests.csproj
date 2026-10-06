@@ -85,4 +85,9 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../InnoEngine/src/services/rendering/Inno.Rendering.Assets.Authoring/Inno.Rendering.Assets.Authoring.csproj" />
+    <ProjectReference Include="../../../InnoEngine/src/services/rendering/Inno.Rendering.Runtime/Inno.Rendering.Runtime.csproj" />
+  </ItemGroup>
 </Project>

@@ -51,8 +51,7 @@ internal sealed class CanvasFixture : IDisposable
         ];
         m_modules = new ModuleHost(new ModuleHostOptions
         {
-            catalogSource = new DotNetAssemblyCatalogSource(typeof(CanvasFixture).Assembly),
-            cacheDirectory = Path.Combine(m_root, "Assemblies")
+            catalogSource = new DotNetAssemblyCatalogSource(typeof(CanvasFixture).Assembly)
         });
         m_modules.Register("CanvasTests", [typeof(Canvas).Assembly]);
         GC.KeepAlive(requiredAssemblies);

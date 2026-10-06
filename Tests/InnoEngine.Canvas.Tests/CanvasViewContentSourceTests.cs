@@ -11,6 +11,7 @@ using Inno.Scene;
 using Inno.Text;
 using Inno.UI;
 using Xunit;
+using Inno.Rendering.Runtime;
 
 namespace Inno.Canvas.Tests;
 

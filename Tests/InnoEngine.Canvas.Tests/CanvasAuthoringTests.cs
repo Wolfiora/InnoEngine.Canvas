@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Inno.Assets;
 using Inno.Build.Toolchains.Bgfx.Tools;
 using Inno.Core.Graphs;
+using Inno.Integration.MacOS.Bgfx;
 using Inno.Rendering;
 using Inno.Rendering.Assets;
 using Inno.Rendering.Shaders;
@@ -56,7 +57,7 @@ public sealed class CanvasAuthoringTests
         using var loader = fixture.CreateLoader();
         ShaderAsset shader = Assert.IsType<ShaderAsset>(loader.Load(
             AssetPath.Project("Shaders/Canvas.ishader"), typeof(ShaderAsset)));
-        var compiler = new ShaderCompiler(new BgfxShadercToolchain(BgfxShaderTargetPlatform.MacOSArm64));
+        var compiler = new ShaderCompiler(new BgfxShadercToolchain(MacOSBgfxShaderProfiles.target));
         RenderTextureFormat[] formats = Enum.GetValues<RenderTextureFormat>();
         var capabilities = new GraphicsCapabilities(
             GraphicsApi.Metal,

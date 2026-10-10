@@ -16,6 +16,7 @@ namespace Inno.Canvas;
 public sealed class Canvas : GameBehavior
 {
     private readonly EventDispatcher m_eventDispatcher = new();
+    private readonly CanvasRenderState m_renderState = new();
     private readonly EventHub m_events;
     private UiContextHandle m_context;
     private UiDocumentHandle m_loadedDocument;
@@ -65,6 +66,8 @@ public sealed class Canvas : GameBehavior
     /// Gets whether the plugin currently owns a live UI context for this component.
     /// </summary>
     public bool isReady => m_context.isValid && m_loadedDocument.isValid;
+
+    internal CanvasRenderState renderState => m_renderState;
 
     /// <summary>
     /// Subscribes to document interactions through this Canvas's Core event hub.
@@ -266,6 +269,7 @@ public sealed class Canvas : GameBehavior
         m_ui = null;
         m_context = default;
         m_loadedDocument = default;
+        m_renderState.Clear();
     }
 
     internal void PublishEvents(IReadOnlyList<UiEvent> events)

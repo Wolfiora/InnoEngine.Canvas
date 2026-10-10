@@ -26,7 +26,7 @@ Inno.Canvas                     RML、字体、世界画布、UI 绘制与事件
 2. Canvas `IViewContentSource` 读取 Canvas 所在对象的完整父子 Transform。`referenceWidth`、`referenceHeight` 决定 RML 逻辑布局尺寸，除以项目级 `logicalPixelsPerWorldUnit` 得到以原点为中心的局部 XY 平面尺寸，再应用父子 Transform；相机投影只决定输出像素与字形栅格密度。
 3. Rendering2D 收集精灵及外部 `ViewContentItem`，应用其 SortingGroup2D 规则统一排序。Canvas 是一个内部顺序固定的透明项，可处于精灵之间。排序后只合并相邻精灵批次。
 4. 已捕获指针的内容项优先接收后续输入；其余目标按绘制顺序反向命中。指针按下决定键盘焦点，焦点 Canvas 在指针移出后继续接收按键和文字。Canvas 射线命中自身平面，将交点转换到局部 RML 坐标。所有 View 先路由输入，`IViewContentFrameSource.CompleteFrame` 再统一推进每个文档 Context 一次，并将 DOM 事件放入 Core EventDispatcher；Canvas 的下一次 GameBehavior.Update 在运行会话作用域内派发回调。Canvas 绘制器将 RML 网格和图集直接送入 2D 场景颜色阶段，随后才进行后处理。
-5. 扩展代际退休时，Canvas Context、字形纹理、字体资产 lease 与绘制资源释放；RmlUi 原生字体注册由 UI backend 在自身退休时清空。Editor/Player 输出目标归 Host 所有。Shader/Material 预览使用专用请求，不属于场景模型。
+5. Canvas 组件拥有 UI Context 及其已发布的中立网格、纹理数据；绘制器只借用这份增量资源状态并拥有当前渲染代际的 GPU 资源。仅重建 ViewContentSource 时释放旧绘制器的 GPU 资源，保留仍存活文档的 CPU 数据，新的绘制器可继续读取后续增量帧。替换文档、UI 服务或销毁组件时清空资源状态并释放 Context；实际插件代际退休继续通过组件销毁完成此流程。RmlUi 原生字体注册由 UI backend 在自身退休时清空。Editor/Player 输出目标归 Host 所有。Shader/Material 预览使用专用请求，不属于场景模型。
 
 ## 作者与运行时约束
 

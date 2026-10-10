@@ -124,19 +124,35 @@ public sealed class CanvasViewContentSourceTests
         Assert.Equal(4, ui.updated);
         Assert.Single(ui.lastInput!.keysPressed);
         Assert.Equal(-10000f, ui.lastInput.mousePosition.x);
+
+        var replacementUi = new CapturingUi();
+        using (UiExecutionContext.EnterScope(replacementUi))
+        {
+            var replacementItems = new CapturingItems();
+            source.Collect(new ViewContentContext(content, "game", view, 5, 0.016f), replacementItems);
+            Assert.Single(replacementItems.items);
+            source.CompleteFrame(5);
+            Assert.Equal(1, ui.destroyed);
+            Assert.Equal(4, ui.updated);
+            Assert.Equal(1, replacementUi.created);
+            Assert.Equal(1, replacementUi.updated);
+            Assert.Equal(1, replacementUi.rendered);
+        }
+
         owner.transform.localScale = new Vector3(0f, 1f, 1f);
         var invalidSize = new CapturingItems();
         source.Collect(new ViewContentContext(content, "game", view, 5, 0.016f), invalidSize);
         Assert.Empty(invalidSize.items);
         Assert.True(canvas.isReady);
-        Assert.Equal(0, ui.destroyed);
+        Assert.Equal(1, ui.destroyed);
         owner.transform.localScale = new Vector3(2f, 1f, 0f);
         source.Collect(new ViewContentContext(content, "game", view, 6, 0.016f), new CapturingItems());
         Assert.True(canvas.isReady);
         Assert.True(scene.DestroyObject(owner));
         source.Collect(new ViewContentContext(content, "game", view, 7, 0.016f), new CapturingItems());
         Assert.False(canvas.isReady);
-        Assert.Equal(1, ui.destroyed);
+        Assert.Equal(2, ui.destroyed);
+        Assert.Equal(1, replacementUi.destroyed);
     }
 
     private sealed class CapturingItems : IViewContentSink

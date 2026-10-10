@@ -12,7 +12,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <CanvasScriptOutput>$(MSBuildProjectDirectory)/obj/CanvasScripts</CanvasScriptOutput>
-    <CanvasCompiler>$(MSBuildProjectDirectory)/../../../InnoEngine/build/cli/Inno.Build.Cli/bin/$(Configuration)/net9.0/Inno.Build.Cli.dll</CanvasCompiler>
+    <CanvasCompilerProject>$(MSBuildProjectDirectory)/../../../InnoEngine/build/cli/Inno.Build.Cli/Inno.Build.Cli.csproj</CanvasCompilerProject>
     <DotNetHost Condition="!$([MSBuild]::IsOSPlatform('Windows'))">$(MSBuildToolsPath)/../../dotnet</DotNetHost>
     <DotNetHost Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(MSBuildToolsPath)/../../dotnet.exe</DotNetHost>
   </PropertyGroup>
@@ -61,13 +61,19 @@
     <ProjectReference Include="../../../InnoEngine/src/services/text/Inno.Text.Assets/Inno.Text.Assets.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/services/ui/Inno.UI/Inno.UI.csproj" />
     <ProjectReference Include="../../../InnoEngine/src/services/ui/Inno.UI.Assets/Inno.UI.Assets.csproj" />
-    <ProjectReference Include="../../../InnoEngine/src/adapters/ui/Inno.Adapter.UI.RmlUi.Authoring/Inno.Adapter.UI.RmlUi.Authoring.csproj" />
-    <ProjectReference Include="../../../InnoEngine/src/adapters/modules/Inno.Adapter.Modules.DotNet/Inno.Adapter.Modules.DotNet.csproj" />
-    <ProjectReference Include="../../../InnoEngine/src/adapters/serialization/Inno.Adapter.Serialization.DotNet/Inno.Adapter.Serialization.DotNet.csproj" />
-    <ProjectReference Include="../../../InnoEngine/build/toolchains/Inno.Build.Toolchains.Bgfx.Tools/Inno.Build.Toolchains.Bgfx.Tools.csproj" />
+    <ProjectReference Include="../../../InnoEngine/backends/RmlUi/runtime/Inno.Adapter.UI.RmlUi.Authoring/Inno.Adapter.UI.RmlUi.Authoring.csproj" />
+    <ProjectReference Include="../../../InnoEngine/backends/DotNet/runtime/Inno.Adapter.Modules.DotNet/Inno.Adapter.Modules.DotNet.csproj" />
+    <ProjectReference Include="../../../InnoEngine/backends/DotNet/runtime/Inno.Adapter.Serialization.DotNet/Inno.Adapter.Serialization.DotNet.csproj" />
+    <ProjectReference Include="../../../InnoEngine/backends/Bgfx/build/Inno.Build.Toolchains.Bgfx.Tools/Inno.Build.Toolchains.Bgfx.Tools.csproj" />
+    <ProjectReference Include="../../../InnoEngine/platforms/MacOS/integrations/Inno.Integration.MacOS.Bgfx/Inno.Integration.MacOS.Bgfx.csproj" />
   </ItemGroup>
   <Target Name="CompileCanvasProjectScripts" BeforeTargets="ResolveAssemblyReferences" DependsOnTargets="ResolveProjectReferences">
-    <Exec Command="&quot;$(DotNetHost)&quot; &quot;$(CanvasCompiler)&quot; scripts --project &quot;$(MSBuildProjectDirectory)/../..&quot; --output &quot;$(CanvasScriptOutput)&quot;" />
+    <Error Condition="'$(CanvasToolsTarget)' == ''" Text="Canvas contract tests require an explicit CanvasToolsTarget matching the authoring tools host." />
+    <MSBuild Projects="$(CanvasCompilerProject)" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="_CanvasCompiler" />
+    </MSBuild>
+    <Error Condition="'@(_CanvasCompiler->Count())' != '1'" Text="Canvas tests require exactly one evaluated build compiler output." />
+    <Exec Command="&quot;$(DotNetHost)&quot; &quot;@(_CanvasCompiler)&quot; scripts --tools-target &quot;$(CanvasToolsTarget)&quot; --project &quot;$(MSBuildProjectDirectory)/../..&quot; --output &quot;$(CanvasScriptOutput)&quot;" />
   </Target>
   <Target Name="CollectCanvasProjectAssets" BeforeTargets="AssignTargetPaths" DependsOnTargets="CompileCanvasProjectScripts">
     <ItemGroup>

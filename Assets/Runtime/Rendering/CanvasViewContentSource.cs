@@ -136,6 +136,7 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
         if (m_states.TryGetValue(id, out CanvasState? state))
         {
             if (ReferenceEquals(state.owner, canvas)
+                && ReferenceEquals(state.ui, ui)
                 && state.documentId == canvas.document!.identity.persistentId
                 && state.documentVersion == canvas.document.contentVersion
                 && state.context == handle)
@@ -150,7 +151,7 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
         if (material is null || material.isMissing)
             throw new InvalidOperationException("The source-local Canvas material is unavailable.");
         state = new CanvasState(canvas, ui, handle, document, layout,
-            new CanvasViewDrawable($"inno.canvas.{id}", material),
+            new CanvasViewDrawable($"inno.canvas.{id}", material, canvas.renderState),
             canvas.document!.identity.persistentId, canvas.document.contentVersion);
         m_states.Add(id, state);
         return state;

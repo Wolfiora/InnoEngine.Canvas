@@ -8,7 +8,7 @@ Canvas 是独立 UI 插件：RML 文档、字体依赖、DOM 事件和世界空�
 
 ```bash
 dotnet run \
-  --project ../InnoEngine/src/composition/editor/host/Inno.Editor.Application -- .
+  --project ../InnoEngine/platforms/Windows/editor/Inno.Editor.Windows -- .
 ```
 
 Canvas 的 `referenceWidth`、`referenceHeight` 默认是 800 × 450，始终决定 RML 百分比布局尺寸。项目级 `CanvasProjectSettings.logicalPixelsPerWorldUnit` 默认是 100；局部平面因此为 8 × 4.5 世界单位，再由自身和父级 Transform 缩放、旋转和定位。相机决定投影和最终屏幕像素密度。Canvas 不存字体、材质、Pipeline、排序或独立密度字段；材质由插件内部管理，2D 排序由 Rendering2D 的 SortingGroup2D 决定。

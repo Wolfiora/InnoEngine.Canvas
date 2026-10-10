@@ -27,8 +27,7 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
 
     private readonly string m_scope;
     private readonly MaterialAsset m_material;
-    private readonly Dictionary<ulong, UiMeshUpdate> m_meshes = [];
-    private readonly Dictionary<ulong, UiTextureUpdate> m_textures = [];
+    private readonly CanvasRenderState m_renderState;
     private readonly Dictionary<int, GeometryState> m_geometry = [];
     private readonly HashSet<RenderPersistentResourceId> m_resourceIds = [];
     private UiRenderFrame m_frame = UiRenderFrame.empty;
@@ -40,11 +39,13 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
 
     internal CanvasViewDrawable(
         string scope,
-        MaterialAsset material
+        MaterialAsset material,
+        CanvasRenderState renderState
     ) {
         ArgumentException.ThrowIfNullOrWhiteSpace(scope);
         m_scope = scope;
         m_material = material ?? throw new ArgumentNullException(nameof(material));
+        m_renderState = renderState ?? throw new ArgumentNullException(nameof(renderState));
     }
 
     internal void Update(
@@ -58,17 +59,11 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
         m_width = width;
         m_height = height;
         m_transform = transform;
-        foreach (UiMeshHandle mesh in frame.releasedMeshes)
-            m_meshes.Remove(mesh.value);
-        foreach (UiMeshUpdate update in frame.meshUpdates)
-            m_meshes[update.mesh.value] = update;
+        m_renderState.Apply(frame);
         foreach (UiTextureHandle texture in frame.releasedTextures)
         {
-            m_textures.Remove(texture.value);
             Release(TextureId(texture.value));
         }
-        foreach (UiTextureUpdate update in frame.textureUpdates)
-            m_textures[update.texture.value] = update;
         foreach (int index in new List<int>(m_geometry.Keys))
         {
             if (index < frame.commands.Count)
@@ -105,7 +100,7 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
         for (int index = 0; index < m_frame.commands.Count; index++)
         {
             UiDrawCommand draw = m_frame.commands[index];
-            if (!m_meshes.TryGetValue(draw.mesh.value, out UiMeshUpdate? mesh))
+            if (!m_renderState.meshes.TryGetValue(draw.mesh.value, out UiMeshUpdate? mesh))
                 throw new InvalidOperationException($"Canvas references unavailable mesh {draw.mesh.value}.");
             GeometryState geometry = GetGeometry(index, draw, mesh);
             if (geometry.indexCount == 0)
@@ -134,7 +129,7 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
             PersistentTextureHandle texture = white;
             if (draw.texture.isValid)
             {
-                if (!m_textures.TryGetValue(draw.texture.value, out UiTextureUpdate? update))
+                if (!m_renderState.textures.TryGetValue(draw.texture.value, out UiTextureUpdate? update))
                     throw new InvalidOperationException($"Canvas references unavailable texture {draw.texture.value}.");
                 RenderPersistentResourceId textureId = TextureId(draw.texture.value);
                 m_resourceIds.Add(textureId);
@@ -167,9 +162,8 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
             }
         }
         m_resourceIds.Clear();
-        m_meshes.Clear();
-        m_textures.Clear();
         m_geometry.Clear();
+        m_frame = UiRenderFrame.empty;
         m_disposed = true;
     }
 

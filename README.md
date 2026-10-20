@@ -1,5 +1,7 @@
 # InnoEngine.Canvas
 
+开发环境使用 `global.json` 声明的 .NET SDK 10.0.402、C# 14，以及支持 .NET 10 的 Rider 或 Visual Studio 2026。项目脚本与生成的 IDE 工程使用相同语言能力。
+
 Canvas 是独立 UI 插件：RML 文档、字体依赖、DOM 事件和世界空间网格由本插件负责。它不引用 Rendering2D，也不提供 Camera 或 GameView 渲染模型。只有安装了能接受世界内容的渲染模型，GameView 和 Player 才会显示 Canvas。
 
 ## 运行样例
@@ -8,7 +10,7 @@ Canvas 是独立 UI 插件：RML 文档、字体依赖、DOM 事件和世界空�
 
 ```bash
 dotnet run \
-  --project ../InnoEngine/platforms/Windows/editor/Inno.Editor.Windows -- .
+  --project ../InnoEngine/entry/InnoEngine.Editor -- .
 ```
 
 Canvas 的 `referenceWidth`、`referenceHeight` 默认是 800 × 450，始终决定 RML 百分比布局尺寸。项目级 `CanvasProjectSettings.logicalPixelsPerWorldUnit` 默认是 100；局部平面因此为 8 × 4.5 世界单位，再由自身和父级 Transform 缩放、旋转和定位。相机决定投影和最终屏幕像素密度。Canvas 不存字体、材质、Pipeline、排序或独立密度字段；材质由插件内部管理，2D 排序由 Rendering2D 的 SortingGroup2D 决定。
@@ -22,11 +24,17 @@ Canvas 的 RML 根默认填满独立的 `referenceWidth × referenceHeight` 布�
 ## 验证与导出
 
 ```bash
-dotnet test Tests/InnoEngine.Canvas.Tests/InnoEngine.Canvas.Tests.csproj
+dotnet test Tests/InnoEngine.Canvas.Tests/InnoEngine.Canvas.Tests.csproj -p:CanvasToolsTarget=windows-x64
 dotnet run \
-  --project ../InnoEngine/build/cli/Inno.Build.Cli -- \
-  plugin --project . --output Builds/InnoEngine.Canvas.iplugin \
+  --project ../InnoEngine/entry/InnoEngine.Build -- \
+  plugin --tools-target windows-x64 --project . --output Builds/InnoEngine.Canvas.iplugin \
   --display-name InnoEngine.Canvas
 ```
+
+macOS ARM64 测试使用 `-p:CanvasToolsTarget=macos-arm64`，导出使用 `--tools-target macos-arm64`。Shader 工具通过引擎发行的正式工具链准备并在测试期间持有读取 lease；不从第三方源码目录寻找预置可执行文件。原生 Metal 编译用例在其他系统明确报告为跳过，其余适用用例继续运行。
+
+测试工程通过引擎现有的源码输入声明指定 checkout，Shader fixture 复用 `Inno.Testing.Source` 读取该声明；SDK 的独立输出目录不会改变源码归属。
+
+需要在命令行同时验证脚本并生成 IDE 工程时，执行 `dotnet run --project ../InnoEngine/entry/InnoEngine.Build -- scripts --tools-target windows-x64 --project . --output Builds/Scripts --ide`；macOS 将工具目标改为 `macos-arm64`。
 
 构建目录、`Library/`、`Logs/` 和根目录生成的 IDE 工程都是派生文件。具体模块边界见 [架构文档](docs/ARCHITECTURE.md)。

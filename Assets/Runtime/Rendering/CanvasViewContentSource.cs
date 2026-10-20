@@ -60,7 +60,7 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
                 {
                     RemoveState(id);
                     if (m_missingDocuments.Add(id))
-                        Log.Warn($"Canvas '{owner.name}' has no usable RML document.");
+                        Log.Warn(typeof(CanvasViewContentSource), $"Canvas '{owner.name}' has no usable RML document.");
                     continue;
                 }
                 m_missingDocuments.Remove(id);
@@ -74,7 +74,7 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
                 {
                     RemoveState(id);
                     if (m_invalidSizes.Add(id))
-                        Log.Warn($"Canvas '{owner.name}' has an invalid world size; each layout edge must be between 1 and {C_MAX_CONTEXT_EDGE} logical pixels.");
+                        Log.Warn(typeof(CanvasViewContentSource), $"Canvas '{owner.name}' has an invalid world size; each layout edge must be between 1 and {C_MAX_CONTEXT_EDGE} logical pixels.");
                     continue;
                 }
                 m_invalidSizes.Remove(id);

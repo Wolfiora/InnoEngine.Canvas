@@ -1,14 +1,20 @@
 using System;
+using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Inno.Assets;
 using Inno.Build.Toolchains.Bgfx.Tools;
+using Inno.Build;
+using Inno.Build.Toolchains;
+using Inno.Build.Distribution.Standard;
 using Inno.Core.Graphs;
-using Inno.Integration.MacOS.Bgfx;
+using Inno.Integration.MacOSArm64.Bgfx;
 using Inno.Rendering;
 using Inno.Rendering.Assets;
 using Inno.Rendering.Shaders;
+using Inno.Testing.Source;
 using Xunit;
 using Inno.Rendering.Assets.Authoring;
 
@@ -43,12 +49,9 @@ public sealed class CanvasAuthoringTests
         Assert.NotEmpty(graph.edges);
     }
 
-    [Fact]
+    [MetalShaderFact]
     public async Task BundledShaderCompilesThroughTheNativeMetalToolchain()
     {
-        if (!OperatingSystem.IsMacOS())
-            return;
-
         using var fixture = new CanvasFixture();
         fixture.CopyProjectAsset("Shaders/CanvasVertex.ishadersource");
         fixture.CopyProjectAsset("Shaders/CanvasFragment.ishadersource");
@@ -57,7 +60,13 @@ public sealed class CanvasAuthoringTests
         using var loader = fixture.CreateLoader();
         ShaderAsset shader = Assert.IsType<ShaderAsset>(loader.Load(
             AssetPath.Project("Shaders/Canvas.ishader"), typeof(ShaderAsset)));
-        var compiler = new ShaderCompiler(new BgfxShadercToolchain(MacOSBgfxShaderProfiles.target));
+        using ProductNativeBuildResult prepared = await PrepareShaderTools();
+        NativeBuildProduct tools = Assert.Single(prepared);
+        var executables = Enum.GetValues<BgfxTool>().ToDictionary(static tool => tool,
+            tool => tools.files.Single(file => Path.GetFileName(file) == tool.ToString().ToLowerInvariant()));
+        string includes = Path.GetDirectoryName(tools.files.Single(file => Path.GetFileName(file) == "bgfx_shader.sh"))!;
+        var compiler = new ShaderCompiler(new BgfxShadercToolchain(MacOSArm64BgfxShaderProfiles.target,
+            new ToolRunner(executables, includes)));
         RenderTextureFormat[] formats = Enum.GetValues<RenderTextureFormat>();
         var capabilities = new GraphicsCapabilities(
             GraphicsApi.Metal,
@@ -88,5 +97,17 @@ public sealed class CanvasAuthoringTests
         Assert.Throws<ArgumentOutOfRangeException>(() => settings.logicalPixelsPerWorldUnit = 0f);
         Assert.Throws<ArgumentOutOfRangeException>(() => settings.logicalPixelsPerWorldUnit = float.NaN);
         Assert.Throws<InvalidOperationException>(() => canvas.SetText("panel", "ready"));
+    }
+
+    private static async Task<ProductNativeBuildResult> PrepareShaderTools()
+    {
+        string repository = TestRepository.GetRoot(typeof(CanvasAuthoringTests).Assembly);
+        var target = new BuildTargetId("macos-arm64");
+        var context = StandardBuildEnvironment.Capture(AppContext.BaseDirectory, target);
+        var build = StandardBuildDistribution.Create(context).build;
+        var native = new NativeBuildContext(repository, "debug").WithBindingGenerator(context.bindingGenerator);
+        native = native.WithToolchain(await build.ResolveNativeToolchain(target.value)
+            .ResolveAsync(native, context.host, target.value, CancellationToken.None));
+        return await build.ResolveNativeProduct(target.value, "shader-tools").BuildAsync(native, CancellationToken.None);
     }
 }

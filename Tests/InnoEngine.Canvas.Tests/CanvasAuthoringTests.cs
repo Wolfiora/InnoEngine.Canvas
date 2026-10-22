@@ -105,7 +105,7 @@ public sealed class CanvasAuthoringTests
         var target = new BuildTargetId("macos-arm64");
         var context = StandardBuildEnvironment.Capture(AppContext.BaseDirectory, target);
         var build = StandardBuildDistribution.Create(context).build;
-        var native = new NativeBuildContext(repository, "debug").WithBindingGenerator(context.bindingGenerator);
+        var native = new NativeBuildContext(repository, "debug").WithBindingGenerator(build.ResolveBindingGenerator(target.value));
         native = native.WithToolchain(await build.ResolveNativeToolchain(target.value)
             .ResolveAsync(native, context.host, target.value, CancellationToken.None));
         return await build.ResolveNativeProduct(target.value, "shader-tools").BuildAsync(native, CancellationToken.None);

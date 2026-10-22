@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using Inno.Assets;
 using Inno.Core.Mathematics;
+using Inno.Core.Identity;
 using Inno.Core.Serialization;
 using Inno.Core.Settings;
 using Inno.References;
@@ -155,6 +157,149 @@ public sealed class CanvasViewContentSourceTests
         Assert.Equal(1, replacementUi.destroyed);
     }
 
+    [Theory]
+    [InlineData("Destroy")]
+    [InlineData("Disable")]
+    [InlineData("DocumentUnassigned")]
+    [InlineData("Remove")]
+    [InlineData("Replace")]
+    [InlineData("ContextReplaced")]
+    [InlineData("Unload")]
+    [InlineData("Unregister")]
+    [InlineData("DestroyDuringUpdate")]
+    public void RetiredCanvasCannotReceiveDeferredInputOrEvents(string operation)
+    {
+        using var fixture = new CanvasFixture();
+        using IDisposable logs = fixture.EnterLogScope();
+        CopyCanvasAssets(fixture);
+        using IDisposable sceneScope = fixture.world.EnterScope();
+        using var loader = fixture.CreateLoader();
+        using IDisposable assets = fixture.EnterAssetScope(loader);
+        using IDisposable settings = ProjectSettingsExecutionContext.EnterScope(new FixedSettings());
+        var document = Assert.IsType<UiDocumentAsset>(loader.Load(AssetPath.Project("~Samples/CanvasDemo.rml"), typeof(UiDocumentAsset)));
+        GameScene scene = fixture.world.LoadNewScene("Deferred Canvas");
+        GameObject owner = scene.CreateObject("UI");
+        Canvas canvas = owner.AddComponent<Canvas>();
+        canvas.document = document;
+        var ui = new CapturingUi();
+        using IDisposable uiScope = UiExecutionContext.EnterScope(ui);
+        using var source = new CanvasViewContentSource();
+        var view = new RenderView("deferred", new RenderViewport(0, 0, 800, 450), Matrix.identity, Matrix.identity);
+        using ContentReadScope content = new([scene.identity]);
+        var items = new CapturingItems();
+        source.Collect(new ViewContentContext(content, "game", view, 1, 0.016f), items);
+        IViewPointerTarget target = Assert.Single(items.items).pointerTarget!;
+        target.SetKeyboardFocus(true);
+        switch (operation)
+        {
+            case "Destroy":
+                Assert.True(scene.DestroyObject(owner));
+                break;
+            case "Disable":
+                canvas.enabled = false;
+                break;
+            case "DocumentUnassigned":
+                canvas.document = null;
+                break;
+            case "Remove":
+                Assert.True(owner.RemoveComponent(canvas));
+                break;
+            case "Replace":
+                Assert.True(owner.RemoveComponent(canvas));
+                owner.AddComponent<Canvas>().document = document;
+                break;
+            case "ContextReplaced":
+                using (UiExecutionContext.EnterScope(new CapturingUi()))
+                    Assert.True(canvas.SetText("message", "Replacement context"));
+                break;
+            case "Unload":
+                Assert.True(fixture.world.UnloadScene(scene));
+                break;
+            case "Unregister":
+                Assert.True(IdentityAllocator.current.Unregister(canvas));
+                break;
+            case "DestroyDuringUpdate":
+                ui.onUpdate = () => Assert.True(scene.DestroyObject(owner));
+                break;
+            default:
+                throw new InvalidOperationException(operation);
+        }
+        target.Advance(RenderOutputInput.empty, default, 1);
+        source.CompleteFrame(1);
+        source.CompleteFrame(2);
+        Assert.Equal(operation == "DestroyDuringUpdate" ? 1 : 0, ui.updated);
+        Assert.Equal(0, ui.rendered);
+        Assert.False(target.hasKeyboardFocus);
+        Assert.False(target.hasPointerCapture);
+        Assert.False(target.TryHit(view, RenderOutputInput.empty, out _));
+        target.Advance(RenderOutputInput.empty, default, 3);
+        source.Dispose();
+        if (!owner.isDestroyed)
+            Assert.True(scene.DestroyObject(owner));
+        Assert.Equal(1, ui.destroyed);
+    }
+
+    [Fact]
+    public void RetainedPointerTargetDoesNotKeepDestroyedCanvasAlive()
+    {
+        using var fixture = new CanvasFixture();
+        using IDisposable logs = fixture.EnterLogScope();
+        CopyCanvasAssets(fixture);
+        using IDisposable sceneScope = fixture.world.EnterScope();
+        using var loader = fixture.CreateLoader();
+        using IDisposable assets = fixture.EnterAssetScope(loader);
+        using IDisposable settings = ProjectSettingsExecutionContext.EnterScope(new FixedSettings());
+        var document = Assert.IsType<UiDocumentAsset>(loader.Load(AssetPath.Project("~Samples/CanvasDemo.rml"), typeof(UiDocumentAsset)));
+        var ui = new CapturingUi();
+        using IDisposable uiScope = UiExecutionContext.EnterScope(ui);
+        using var source = new CanvasViewContentSource();
+        (WeakReference<Canvas> weak, IViewPointerTarget target) = CollectDestroyedCanvas(fixture.world.LoadNewScene("Weak Canvas"), document, source);
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+        Assert.False(weak.TryGetTarget(out _));
+        target.Advance(RenderOutputInput.empty, default, 2);
+        source.CompleteFrame(2);
+        Assert.Equal(0, ui.updated);
+        Assert.Equal(1, ui.destroyed);
+        GC.KeepAlive(target);
+        GC.KeepAlive(source);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static (WeakReference<Canvas>, IViewPointerTarget) CollectDestroyedCanvas(
+        GameScene scene,
+        UiDocumentAsset document,
+        CanvasViewContentSource source
+    ) {
+        GameObject owner = scene.CreateObject("Temporary UI");
+        Canvas canvas = owner.AddComponent<Canvas>();
+        canvas.document = document;
+        using ContentReadScope content = new([scene.identity]);
+        var view = new RenderView("weak", new RenderViewport(0, 0, 800, 450), Matrix.identity, Matrix.identity);
+        var items = new CapturingItems();
+        source.Collect(new ViewContentContext(content, "game", view, 1, 0.016f), items);
+        var weak = new WeakReference<Canvas>(canvas);
+        Assert.True(scene.DestroyObject(owner));
+        return (weak, Assert.Single(items.items).pointerTarget!);
+    }
+
+    private static void CopyCanvasAssets(CanvasFixture fixture)
+    {
+        string[] paths =
+        [
+            "~Samples/CanvasDemo.rml",
+            "~Samples/Fonts/LatoLatin-Regular.ttf",
+            "~Samples/Fonts/LatoLatin-Bold.ttf",
+            "Shaders/CanvasVertex.ishadersource",
+            "Shaders/CanvasFragment.ishadersource",
+            "Shaders/Canvas.ishader",
+            "Materials/Canvas.imaterial"
+        ];
+        foreach (string path in paths)
+            fixture.CopyProjectAsset(path);
+    }
+
     private sealed class CapturingItems : IViewContentSink
     {
         internal List<ViewContentItem> items { get; } = [];
@@ -186,6 +331,7 @@ public sealed class CanvasViewContentSourceTests
         internal int attributesSet { get; private set; }
         internal UiInputSnapshot? lastInput { get; private set; }
         internal UiContextOptions lastOptions { get; private set; }
+        internal Action? onUpdate { get; set; }
 
         public UiContextHandle CreateContext(UiContextOptions options)
         {
@@ -220,10 +366,13 @@ public sealed class CanvasViewContentSourceTests
         public bool SetClass(UiContextHandle context, UiDocumentHandle document, string elementId, string className, bool active) => true;
         public void RegisterTexture(UiContextHandle context, string source, UiTextureData texture) { }
         public void Update(UiContextHandle context) => updated++;
-        public void Update(UiContextHandle context, UiInputSnapshot input)
-        {
+        public void Update(
+            UiContextHandle context,
+            UiInputSnapshot input
+        ) {
             updated++;
             lastInput = input;
+            onUpdate?.Invoke();
         }
         public UiRenderFrame Render(UiContextHandle context)
         {

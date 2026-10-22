@@ -272,6 +272,15 @@ public sealed class Canvas : GameBehavior
         m_renderState.Clear();
     }
 
+    internal bool IsCurrentDocument(
+        IUiService ui,
+        UiContextHandle context,
+        UiDocumentHandle loadedDocument
+    ) => !isDestroyed && isActiveAndEnabled
+        && ReferenceEquals(m_ui, ui) && m_context == context && m_loadedDocument == loadedDocument
+        && document is { isMissing: false, source: not null } source
+        && source.identity.persistentId == m_documentId && source.contentVersion == m_documentVersion;
+
     internal void PublishEvents(IReadOnlyList<UiEvent> events)
     {
         ArgumentNullException.ThrowIfNull(events);

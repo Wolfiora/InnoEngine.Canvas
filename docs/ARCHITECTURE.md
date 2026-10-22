@@ -30,6 +30,8 @@ Inno.Canvas                     RML、字体、世界画布、UI 绘制与事件
 
 ## 作者与运行时约束
 
+跨帧 `CanvasState` 使用既有 `Identity.Resolve<Canvas>()` 弱快照定位组件，不持有 Canvas 强引用，也不使用当前执行域猜测原 owner。输入和每次外部 UI 调用后的状态消费重新校验身份、启用状态、文档、Context 与服务；失效目标停止推进并幂等退休绘制资源。组件继续独占 UI Context 的创建和销毁。退休键使用复用的临时列表集中移除，不另建 resolver 或逐帧分配完整状态快照。
+
 - Canvas 组件只保存 `document`。字体由 RML 的 `@font-face` 声明，资源在导入时成为依赖；`font-family` 选族，`font-weight` 选面，`font-size` 定大小。文档使用隔离的后端字体名。未知字体与 `none` 不借用其他文档的旧字体。
 - Canvas 的 `SetText`、`SetClass` 和 `Listen(handler)` 用于 HUD 更新、点击及 RCSS 动画。内部在渲染输出阶段读取 UI 事件，交给 Core EventDispatcher，在下一次脚本更新中派发；订阅 token 由脚本释放。样例把按钮事件与 `opacity` transition 串起来。世界 HUD 可以作为 Camera 子对象；它仍是受世界排序与遮挡规则控制的画布。
 - 默认路径不为每个 Canvas 创建 RenderTexture。局部裁剪后的网格和字形图集直接绘制；纹理只应服务明确的缓存或特殊效果。

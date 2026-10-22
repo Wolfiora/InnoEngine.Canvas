@@ -21,6 +21,8 @@ Canvas 的 RML 根默认填满独立的 `referenceWidth × referenceHeight` 布�
 
 `Assets/Runtime/Rendering` 将 UI 作为中立 `IViewContentSource` 发布；Rendering2D 收集后与精灵统一排序，在场景颜色阶段和后处理之前绘制。输入先按 View 与同一绘制顺序命中，再逆变换成 Canvas 局部 RML 坐标。默认直接绘制网格和字形图集，不为每个 Canvas 固定创建纹理。
 
+跨帧输入状态只保存 Core Identity 的弱快照。命中、输入提交、UI 更新和事件交付在原身份域重新解析 Canvas，并核对组件启用状态及当前文档；组件销毁、注销、禁用或文档替换后，旧目标不再调用 UI 服务，焦点和捕获同时失效。组件拥有 UI Context，渲染状态只退休自身 GPU 资源，不重复销毁组件的 Context。
+
 ## 验证与导出
 
 ```bash

@@ -25,6 +25,7 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
     private readonly Dictionary<RuntimeIdentity, CanvasState> m_states = [];
     private readonly HashSet<RuntimeIdentity> m_invalidSizes = [];
     private readonly HashSet<RuntimeIdentity> m_missingDocuments = [];
+    private readonly List<RuntimeIdentity> m_retiredStates = [];
     private bool m_disposed;
 
     /// <inheritdoc />
@@ -36,8 +37,7 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(sink);
         foreach (RuntimeIdentity key in m_states.Keys.Where(key =>
-                     m_states[key].owner.isDestroyed ||
-                     m_states[key].owner.identity.runtimeIdentity != key).ToArray())
+                     !m_states[key].isValid).ToArray())
         {
             m_states[key].Dispose();
             m_states.Remove(key);
@@ -95,8 +95,18 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
     public void CompleteFrame(ulong frameIndex)
     {
         ObjectDisposedException.ThrowIf(m_disposed, this);
-        foreach (CanvasState state in m_states.Values)
-            state.CompleteFrame(frameIndex);
+        try
+        {
+            foreach ((RuntimeIdentity id, CanvasState state) in m_states)
+                if (!state.CompleteFrame(frameIndex))
+                    m_retiredStates.Add(id);
+            foreach (RuntimeIdentity id in m_retiredStates)
+                RemoveState(id);
+        }
+        finally
+        {
+            m_retiredStates.Clear();
+        }
     }
 
     /// <inheritdoc />
@@ -109,6 +119,7 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
         m_states.Clear();
         m_invalidSizes.Clear();
         m_missingDocuments.Clear();
+        m_retiredStates.Clear();
         m_disposed = true;
     }
 
@@ -126,7 +137,7 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
         RuntimeIdentity id = canvas.identity.runtimeIdentity
             ?? throw new InvalidOperationException("Canvas has no live runtime identity.");
         if (m_states.TryGetValue(id, out CanvasState? existing) &&
-            ReferenceEquals(existing.owner, canvas) &&
+            existing.MatchesOwner(canvas) &&
             existing.layout.density > layout.density &&
             existing.layout.logicalWidth == layout.logicalWidth &&
             existing.layout.logicalHeight == layout.logicalHeight)
@@ -135,7 +146,7 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
             canvas.EnsureDocument(layout.width, layout.height, layout.density);
         if (m_states.TryGetValue(id, out CanvasState? state))
         {
-            if (ReferenceEquals(state.owner, canvas)
+            if (state.MatchesOwner(canvas)
                 && ReferenceEquals(state.ui, ui)
                 && state.documentId == canvas.document!.identity.persistentId
                 && state.documentVersion == canvas.document.contentVersion
@@ -150,7 +161,7 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
         MaterialAsset? material = AssetsApi.Load<MaterialAsset>(AssetsApi.LocalPath(CanvasIds.defaultMaterialPath));
         if (material is null || material.isMissing)
             throw new InvalidOperationException("The source-local Canvas material is unavailable.");
-        state = new CanvasState(canvas, ui, handle, document, layout,
+        state = new CanvasState(canvas.identity, ui, handle, document, layout,
             new CanvasViewDrawable($"inno.canvas.{id}", material, canvas.renderState),
             canvas.document!.identity.persistentId, canvas.document.contentVersion);
         m_states.Add(id, state);
@@ -222,7 +233,7 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
     );
 
     private sealed class CanvasState(
-        Canvas owner,
+        Identity ownerIdentity,
         IUiService ui,
         UiContextHandle context,
         UiDocumentHandle document,
@@ -232,7 +243,14 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
         long documentVersion
     ) : IViewPointerTarget, IDisposable
     {
-        internal Canvas owner { get; } = owner;
+        private readonly Identity m_ownerIdentity = ownerIdentity;
+        private bool m_disposed;
+        private bool m_captured;
+        private bool m_keyboardFocused;
+        private RenderOutputInput? m_routedInput;
+        private Vector2 m_routedPosition;
+        private ulong m_routedFrame = ulong.MaxValue;
+
         internal IUiService ui { get; } = ui;
         internal UiContextHandle context { get; } = context;
         internal UiDocumentHandle document { get; } = document;
@@ -242,16 +260,15 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
         internal CanvasLayout layout { get; set; } = layout;
         internal Matrix planeTransform { get; set; }
         internal ulong frameIndex { get; set; } = ulong.MaxValue;
-        private bool m_captured;
-        private bool m_keyboardFocused;
-        private RenderOutputInput? m_routedInput;
-        private Vector2 m_routedPosition;
-        private ulong m_routedFrame = ulong.MaxValue;
 
-        public bool hasPointerCapture => m_captured;
-        public bool hasKeyboardFocus => m_keyboardFocused;
+        internal bool isValid => ResolveOwner() is not null;
 
-        public void SetKeyboardFocus(bool focused) => m_keyboardFocused = focused;
+        internal bool MatchesOwner(Canvas canvas) => ReferenceEquals(ResolveOwner(), canvas);
+
+        public bool hasPointerCapture => isValid && m_captured;
+        public bool hasKeyboardFocus => isValid && m_keyboardFocused;
+
+        public void SetKeyboardFocus(bool focused) => m_keyboardFocused = isValid && focused;
 
         public bool TryHit(
             RenderView view,
@@ -259,6 +276,11 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
             out Vector2 localPosition
         ) {
             localPosition = default;
+            if (!isValid)
+            {
+                Dispose();
+                return false;
+            }
             if (!input.pointerInside && !m_captured)
                 return false;
             Matrix localToWorld = planeTransform;
@@ -306,6 +328,11 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
             Vector2 localPosition,
             ulong frameIndex
         ) {
+            if (!isValid)
+            {
+                Dispose();
+                return;
+            }
             if (!input.interactionEnabled)
             {
                 m_captured = false;
@@ -322,10 +349,15 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
                 Merge(input, localPosition);
         }
 
-        internal void CompleteFrame(ulong frameIndex)
+        internal bool CompleteFrame(ulong frameIndex)
         {
+            if (!isValid)
+            {
+                Dispose();
+                return false;
+            }
             if (this.frameIndex == frameIndex)
-                return;
+                return true;
             this.frameIndex = frameIndex;
             RenderOutputInput input = m_routedFrame == frameIndex
                 ? m_routedInput ?? RenderOutputInput.empty
@@ -338,13 +370,38 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
             ui.Update(context, new UiInputSnapshot(position, input.scrollDelta, input.modifiers,
                 input.keysPressed, input.keysReleased, input.buttonsPressed,
                 input.buttonsReleased, input.textInput));
+            if (!isValid)
+            {
+                Dispose();
+                return false;
+            }
             IReadOnlyList<UiEvent> events = ui.DrainEvents(context);
-            drawable.Update(ui.Render(context), layout.width, layout.height,
-                planeTransform);
+            if (!isValid)
+            {
+                Dispose();
+                return false;
+            }
+            UiRenderFrame rendered = ui.Render(context);
+            Canvas? owner = ResolveOwner();
+            if (owner is null)
+            {
+                Dispose();
+                return false;
+            }
+            drawable.Update(rendered, layout.width, layout.height, planeTransform);
             if (input.buttonsReleased.Count > 0)
                 m_captured = false;
             m_routedInput = null;
             owner.PublishEvents(events);
+            return true;
+        }
+
+        private Canvas? ResolveOwner()
+        {
+            if (m_disposed)
+                return null;
+            Canvas? owner = m_ownerIdentity.Resolve<Canvas>();
+            return owner is not null && owner.IsCurrentDocument(ui, context, document) ? owner : null;
         }
 
         private void Merge(
@@ -385,6 +442,12 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
 
         public void Dispose()
         {
+            if (m_disposed)
+                return;
+            m_disposed = true;
+            m_captured = false;
+            m_keyboardFocused = false;
+            m_routedInput = null;
             drawable.Dispose();
         }
     }

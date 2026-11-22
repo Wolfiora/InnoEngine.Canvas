@@ -37,9 +37,9 @@ public sealed class CanvasShaderPreviewPipeline : RenderPipeline
     /// <summary>
     /// Gets the frame-only preview input channel.
     /// </summary>
-    public static RenderDataChannelId channel => new(pipelineId);
+    public static RenderDataChannelID channel => new(pipelineId);
 
-    private static readonly RenderBindingId s_textureBinding = new("s_canvasTexture");
+    private static readonly RenderBindingID s_textureBinding = new("s_canvasTexture");
     private static readonly RenderVertexLayout s_vertices = new(
     [
         new(RenderVertexSemantic.Position, RenderVertexFormat.Float3, 0),
@@ -59,7 +59,7 @@ public sealed class CanvasShaderPreviewPipeline : RenderPipeline
         if (!context.outputTexture.isValid)
             throw new InvalidOperationException("A Canvas preview requires an offscreen output.");
         if (!context.resourceService.TryResolveMaterialArtifact(
-                preview.resourceId, preview.artifact, preview.material,
+                preview.resourceID, preview.artifact, preview.material,
                 CanvasIds.materialContract, CanvasIds.premultipliedRole, ShaderProgramKind.Raster,
                 s_vertices, null, preview.diagnostics, out RenderMaterialPass? material) || material is null)
             return;

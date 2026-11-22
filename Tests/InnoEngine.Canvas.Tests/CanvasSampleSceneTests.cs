@@ -26,7 +26,7 @@ public sealed class CanvasSampleSceneTests
         GameObject panel = Assert.Single(scene.GetObjects(), owner => owner.name == "Canvas Demo");
         Canvas canvas = Assert.IsType<Canvas>(panel.GetComponents().Single(component => component is Canvas));
         Assert.IsType<CanvasDemoController>(panel.GetComponents().Single(component => component is CanvasDemoController));
-        Assert.IsType<UiDocumentAsset>(canvas.document);
+        Assert.IsType<UIDocumentAsset>(canvas.document);
         Assert.Equal(1f, panel.transform.localScale.x);
         Assert.Equal(1f, panel.transform.localScale.y);
         Assert.Equal(800, canvas.referenceWidth);

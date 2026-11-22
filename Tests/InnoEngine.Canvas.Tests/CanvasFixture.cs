@@ -43,7 +43,7 @@ internal sealed class CanvasFixture : IDisposable
             typeof(CanvasShaderTemplate).Assembly,
             typeof(AssetSerializationServices).Assembly,
             typeof(BgfxShaderSourceFrontend).Assembly,
-            typeof(UiDocumentImporter).Assembly,
+            typeof(UIDocumentImporter).Assembly,
             typeof(FontImporter).Assembly,
             typeof(SceneAsset).Assembly,
             Assembly.Load("Inno.Scene.Assets"),

@@ -74,7 +74,7 @@ public sealed class CanvasShaderTemplate : ShaderGraphTemplate
             "Canvas",
             [
                 new ShaderPropertyDefinition(
-                    new ShaderPropertyId("s_canvasTexture"),
+                    new ShaderPropertyID("s_canvasTexture"),
                     "Canvas Texture",
                     ShaderPropertyType.Texture2D,
                     ShaderStage.Fragment,
@@ -86,7 +86,7 @@ public sealed class CanvasShaderTemplate : ShaderGraphTemplate
             techniques:
             [
                 new ShaderTechniqueDefinition(
-                    new ShaderTechniqueId("default"),
+                    new ShaderTechniqueID("default"),
                     CanvasIds.materialContract,
                     [new ShaderTechniquePass(CanvasIds.premultipliedRole, pass.name)])
             ]);
@@ -147,8 +147,8 @@ public sealed class CanvasShaderTemplate : ShaderGraphTemplate
             ShaderStage stage,
             ShaderGraphOutput[] outputs
         ) {
-            GraphNodeRecord node = Node(id, ShaderGraphDocument.outputDefinitionId, null);
-            Set(node, ShaderGraphDocument.settingsKey, new ShaderGraphStageSettings
+            GraphNodeRecord node = Node(id, ShaderGraphDocument.C_OUTPUT_DEFINITION_ID, null);
+            Set(node, ShaderGraphDocument.C_SETTINGS_KEY, new ShaderGraphStageSettings
             {
                 stage = stage,
                 outputs = outputs
@@ -166,7 +166,7 @@ public sealed class CanvasShaderTemplate : ShaderGraphTemplate
         ) {
             string stageId = stage.ToString();
             GraphNodeRecord node = Node(id, "inno.shader.stage-input", stageId);
-            Set(node, ShaderGraphDocument.settingsKey, new ShaderGraphInputSettings
+            Set(node, ShaderGraphDocument.C_SETTINGS_KEY, new ShaderGraphInputSettings
             {
                 id = id[(id.IndexOf('.') + 1)..],
                 type = new ShaderGraphType { id = type },
@@ -184,8 +184,8 @@ public sealed class CanvasShaderTemplate : ShaderGraphTemplate
             GraphNodeRecord output
         ) {
             GraphNodeRecord node = Node(id, "inno.shader.source", output.id.value);
-            Set(node, ShaderGraphDocument.stageKey, stage.ToString());
-            Set(node, "sourceId", function.identity.persistentId);
+            Set(node, ShaderGraphDocument.C_STAGE_KEY, stage.ToString());
+            Set(node, "sourceId", function.identity.persistentID);
             Set(node, "sourcePath", function.assetPath.ToString());
             Set(node, "function", function.exports.Single());
             return node;
@@ -196,7 +196,7 @@ public sealed class CanvasShaderTemplate : ShaderGraphTemplate
             string definitionId,
             string? stage
         ) {
-            var node = new GraphNodeRecord(new GraphNodeId(id), definitionId)
+            var node = new GraphNodeRecord(new GraphNodeID(id), definitionId)
             {
                 position = new GraphPosition(
                     80f + (graph.nodes.Count % 4) * 300f,
@@ -204,7 +204,7 @@ public sealed class CanvasShaderTemplate : ShaderGraphTemplate
             };
             graph.AddNode(node);
             if (!string.IsNullOrWhiteSpace(stage))
-                Set(node, ShaderGraphDocument.stageKey, stage);
+                Set(node, ShaderGraphDocument.C_STAGE_KEY, stage);
             return node;
         }
 
@@ -222,9 +222,9 @@ public sealed class CanvasShaderTemplate : ShaderGraphTemplate
             string input
         )
             => graph.AddEdge(new GraphEdgeRecord(
-                new GraphEdgeId($"{source.id.value}.{output}->{target.id.value}.{input}"),
-                new GraphEndpoint(source.id, new GraphPortId(output)),
-                new GraphEndpoint(target.id, new GraphPortId(input))));
+                new GraphEdgeID($"{source.id.value}.{output}->{target.id.value}.{input}"),
+                new GraphEndpoint(source.id, new GraphPortID(output)),
+                new GraphEndpoint(target.id, new GraphPortID(input))));
     }
 
     private static void Validate(
@@ -233,7 +233,7 @@ public sealed class CanvasShaderTemplate : ShaderGraphTemplate
     ) {
         ArgumentNullException.ThrowIfNull(function, parameter);
         if (function.isMissing
-            || function.identity.persistentId == Guid.Empty
+            || function.identity.persistentID == Guid.Empty
             || function.exports.Length != 1)
         {
             throw new ArgumentException(

@@ -22,10 +22,10 @@ public static class CanvasIds
     /// <summary>
     /// Gets the material contract consumed by the Canvas pipeline.
     /// </summary>
-    public static ShaderContractId materialContract => new("inno.canvas.material");
+    public static ShaderContractID materialContract => new("inno.canvas.material");
 
     /// <summary>
     /// Gets the premultiplied-alpha pass role consumed by the Canvas pipeline.
     /// </summary>
-    public static ShaderPassRoleId premultipliedRole => new("inno.canvas.premultiplied");
+    public static ShaderPassRoleID premultipliedRole => new("inno.canvas.premultiplied");
 }

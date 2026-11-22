@@ -11,7 +11,7 @@ namespace Inno.Canvas;
 internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
 {
     private const int C_VERTEX_STRIDE = 24;
-    private static readonly RenderBindingId S_TEXTURE_BINDING = new("s_canvasTexture");
+    private static readonly RenderBindingID S_TEXTURE_BINDING = new("s_canvasTexture");
     private static readonly RenderVertexLayout S_VERTEX_LAYOUT = new(
     [
         new(RenderVertexSemantic.Position, RenderVertexFormat.Float3, 0),
@@ -29,8 +29,8 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
     private readonly MaterialAsset m_material;
     private readonly CanvasRenderState m_renderState;
     private readonly Dictionary<int, GeometryState> m_geometry = [];
-    private readonly HashSet<RenderPersistentResourceId> m_resourceIds = [];
-    private UiRenderFrame m_frame = UiRenderFrame.empty;
+    private readonly HashSet<RenderPersistentResourceID> m_resourceIds = [];
+    private UIRenderFrame m_frame = UIRenderFrame.empty;
     private Matrix m_transform;
     private int m_width;
     private int m_height;
@@ -49,7 +49,7 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
     }
 
     internal void Update(
-        UiRenderFrame frame,
+        UIRenderFrame frame,
         int width,
         int height,
         Matrix transform
@@ -60,7 +60,7 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
         m_height = height;
         m_transform = transform;
         m_renderState.Apply(frame);
-        foreach (UiTextureHandle texture in frame.releasedTextures)
+        foreach (UITextureHandle texture in frame.releasedTextures)
         {
             Release(TextureId(texture.value));
         }
@@ -99,16 +99,16 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
         var commands = new List<PreparedCommand>(m_frame.commands.Count);
         for (int index = 0; index < m_frame.commands.Count; index++)
         {
-            UiDrawCommand draw = m_frame.commands[index];
-            if (!m_renderState.meshes.TryGetValue(draw.mesh.value, out UiMeshUpdate? mesh))
+            UIDrawCommand draw = m_frame.commands[index];
+            if (!m_renderState.meshes.TryGetValue(draw.mesh.value, out UIMeshUpdate? mesh))
                 throw new InvalidOperationException($"Canvas references unavailable mesh {draw.mesh.value}.");
             GeometryState geometry = GetGeometry(index, draw, mesh);
             if (geometry.indexCount == 0)
                 continue;
             if (geometry.index32 && !context.capabilities.Supports(GraphicsCapability.Index32))
                 continue;
-            RenderPersistentResourceId vertexId = VertexId(index);
-            RenderPersistentResourceId indexId = IndexId(index);
+            RenderPersistentResourceID vertexId = VertexId(index);
+            RenderPersistentResourceID indexId = IndexId(index);
             m_resourceIds.Add(vertexId);
             m_resourceIds.Add(indexId);
             PersistentBufferHandle vertices = context.resourceService.AcquireBuffer(
@@ -129,9 +129,9 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
             PersistentTextureHandle texture = white;
             if (draw.texture.isValid)
             {
-                if (!m_renderState.textures.TryGetValue(draw.texture.value, out UiTextureUpdate? update))
+                if (!m_renderState.textures.TryGetValue(draw.texture.value, out UITextureUpdate? update))
                     throw new InvalidOperationException($"Canvas references unavailable texture {draw.texture.value}.");
-                RenderPersistentResourceId textureId = TextureId(draw.texture.value);
+                RenderPersistentResourceID textureId = TextureId(draw.texture.value);
                 m_resourceIds.Add(textureId);
                 texture = context.resourceService.AcquireTexture(
                     textureId,
@@ -152,7 +152,7 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
             return;
         if (m_resources is not null)
         {
-            foreach (RenderPersistentResourceId id in m_resourceIds)
+            foreach (RenderPersistentResourceID id in m_resourceIds)
             {
                 try
                 {
@@ -163,22 +163,22 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
         }
         m_resourceIds.Clear();
         m_geometry.Clear();
-        m_frame = UiRenderFrame.empty;
+        m_frame = UIRenderFrame.empty;
         m_disposed = true;
     }
 
     private GeometryState GetGeometry(
         int index,
-        UiDrawCommand draw,
-        UiMeshUpdate mesh
+        UIDrawCommand draw,
+        UIMeshUpdate mesh
     ) {
-        UiClipRectangle clip = draw.scissorEnabled
+        UIClipRectangle clip = draw.scissorEnabled
             ? draw.scissor
-            : new UiClipRectangle(0, 0, m_width, m_height);
+            : new UIClipRectangle(0, 0, m_width, m_height);
         var key = new GeometryKey(draw.mesh.value, mesh.revision, clip, m_width, m_height, m_transform);
         if (m_geometry.TryGetValue(index, out GeometryState? state) && state.key == key)
             return state;
-        var vertices = new List<UiVertex>();
+        var vertices = new List<UIVertex>();
         var indices = new List<uint>();
         float left = Math.Clamp(clip.x, 0, m_width);
         float top = Math.Clamp(clip.y, 0, m_height);
@@ -188,7 +188,7 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
         {
             for (int triangle = 0; triangle + 2 < mesh.indices.Count; triangle += 3)
             {
-                var polygon = new List<UiVertex>(3)
+                var polygon = new List<UIVertex>(3)
                 {
                     mesh.vertices[checked((int)mesh.indices[triangle])],
                     mesh.vertices[checked((int)mesh.indices[triangle + 1])],
@@ -214,7 +214,7 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
         byte[] vertexBytes = new byte[checked(vertices.Count * C_VERTEX_STRIDE)];
         for (int vertexIndex = 0; vertexIndex < vertices.Count; vertexIndex++)
         {
-            UiVertex vertex = vertices[vertexIndex];
+            UIVertex vertex = vertices[vertexIndex];
             Vector3 world = Vector3.Transform(new Vector3(
                 vertex.x / m_width - 0.5f,
                 0.5f - vertex.y / m_height,
@@ -242,19 +242,19 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
         return state;
     }
 
-    private static List<UiVertex> Clip(
-        IReadOnlyList<UiVertex> polygon,
-        Func<UiVertex, float> coordinate,
+    private static List<UIVertex> Clip(
+        IReadOnlyList<UIVertex> polygon,
+        Func<UIVertex, float> coordinate,
         float boundary,
         bool keepGreater
     ) {
-        var result = new List<UiVertex>(polygon.Count + 2);
+        var result = new List<UIVertex>(polygon.Count + 2);
         if (polygon.Count == 0)
             return result;
-        UiVertex previous = polygon[^1];
+        UIVertex previous = polygon[^1];
         float previousCoordinate = coordinate(previous);
         bool previousInside = keepGreater ? previousCoordinate >= boundary : previousCoordinate <= boundary;
-        foreach (UiVertex current in polygon)
+        foreach (UIVertex current in polygon)
         {
             float currentCoordinate = coordinate(current);
             bool currentInside = keepGreater ? currentCoordinate >= boundary : currentCoordinate <= boundary;
@@ -272,9 +272,9 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
         return result;
     }
 
-    private static UiVertex Interpolate(
-        UiVertex a,
-        UiVertex b,
+    private static UIVertex Interpolate(
+        UIVertex a,
+        UIVertex b,
         float t
     ) {
         uint color = 0;
@@ -283,7 +283,7 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
             float channel = ((a.color >> shift) & 0xff) * (1f - t) + ((b.color >> shift) & 0xff) * t;
             color |= (uint)Math.Clamp((int)MathF.Round(channel), 0, 255) << shift;
         }
-        return new UiVertex(
+        return new UIVertex(
             a.x + (b.x - a.x) * t,
             a.y + (b.y - a.y) * t,
             a.u + (b.u - a.u) * t,
@@ -293,20 +293,20 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
 
     private PersistentTextureHandle AcquireWhite(IRenderResourceService resources)
     {
-        RenderPersistentResourceId id = new($"{m_scope}.white");
+        RenderPersistentResourceID id = new($"{m_scope}.white");
         m_resourceIds.Add(id);
         return resources.AcquireTexture(id, 1, S_WHITE_TEXTURE, S_WHITE_DATA, "Canvas white texture");
     }
 
-    private void Release(RenderPersistentResourceId id)
+    private void Release(RenderPersistentResourceID id)
     {
         if (m_resourceIds.Remove(id))
             m_resources?.Release(id);
     }
 
-    private RenderPersistentResourceId VertexId(int index) => new($"{m_scope}.draw.{index}.vertices");
-    private RenderPersistentResourceId IndexId(int index) => new($"{m_scope}.draw.{index}.indices");
-    private RenderPersistentResourceId TextureId(ulong id) => new($"{m_scope}.texture.{id}");
+    private RenderPersistentResourceID VertexId(int index) => new($"{m_scope}.draw.{index}.vertices");
+    private RenderPersistentResourceID IndexId(int index) => new($"{m_scope}.draw.{index}.indices");
+    private RenderPersistentResourceID TextureId(ulong id) => new($"{m_scope}.texture.{id}");
 
     private static ulong Hash(
         ReadOnlySpan<byte> vertices,
@@ -323,7 +323,7 @@ internal sealed class CanvasViewDrawable : IViewDrawable, IDisposable
     private readonly record struct GeometryKey(
         ulong mesh,
         ulong revision,
-        UiClipRectangle clip,
+        UIClipRectangle clip,
         int width,
         int height,
         Matrix transform

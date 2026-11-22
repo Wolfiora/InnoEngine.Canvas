@@ -12,15 +12,15 @@ namespace Inno.Canvas;
 /// <summary>
 /// Declares a retained UI document on this object's transformed world plane.
 /// </summary>
-[StableTypeId("385f32c2-aa2f-4383-82d0-dcedb722e680")]
+[StableTypeID("385f32c2-aa2f-4383-82d0-dcedb722e680")]
 public sealed class Canvas : GameBehavior
 {
     private readonly EventDispatcher m_eventDispatcher = new();
     private readonly CanvasRenderState m_renderState = new();
     private readonly EventHub m_events;
-    private UiContextHandle m_context;
-    private UiDocumentHandle m_loadedDocument;
-    private IUiService? m_ui;
+    private UIContextHandle m_context;
+    private UIDocumentHandle m_loadedDocument;
+    private IUIService? m_ui;
     private Guid m_documentId;
     private long m_documentVersion;
     private int m_viewportWidth;
@@ -38,7 +38,7 @@ public sealed class Canvas : GameBehavior
     /// Gets or sets the imported RML document displayed by this canvas.
     /// </summary>
     [SerializableProperty]
-    public UiDocumentAsset? document { get; set; }
+    public UIDocumentAsset? document { get; set; }
 
     /// <summary>
     /// Gets or sets the fixed horizontal RML layout extent in logical pixels.
@@ -88,7 +88,7 @@ public sealed class Canvas : GameBehavior
     /// The Canvas has been destroyed.
     /// </exception>
     public IDisposable Listen(
-        Action<UiEvent> handler,
+        Action<UIEvent> handler,
         int priority = 0
     ) {
         ArgumentNullException.ThrowIfNull(handler);
@@ -129,7 +129,7 @@ public sealed class Canvas : GameBehavior
     /// </returns>
     public bool SetContent(
         string elementId,
-        UiDocumentFragment content
+        UIDocumentFragment content
     )
         => UiApi.SetContent(RequireContext(), RequireDocument(), elementId, content);
 
@@ -197,33 +197,33 @@ public sealed class Canvas : GameBehavior
     /// </exception>
     public void RegisterTexture(
         string source,
-        UiTextureData texture
+        UITextureData texture
     ) => UiApi.RegisterTexture(RequireContext(), source, texture);
 
-    internal (IUiService ui, UiContextHandle context, UiDocumentHandle loadedDocument) EnsureDocument(
+    internal (IUIService ui, UIContextHandle context, UIDocumentHandle loadedDocument) EnsureDocument(
         int width,
         int height,
         float density
     ) {
-        UiDocumentAsset source = document is { isMissing: false, source: not null } available
+        UIDocumentAsset source = document is { isMissing: false, source: not null } available
             ? available : throw new InvalidOperationException("Canvas has no usable UI document.");
-        IUiService ui = UiExecutionContext.current;
+        IUIService ui = UIExecutionContext.current;
         if (m_context.isValid &&
-            (!ReferenceEquals(m_ui, ui) || m_documentId != source.identity.persistentId
+            (!ReferenceEquals(m_ui, ui) || m_documentId != source.identity.persistentID
                 || m_documentVersion != source.contentVersion))
             ReleaseDocument();
         if (!m_context.isValid)
         {
-            UiContextHandle context = ui.CreateContext(new UiContextOptions(
+            UIContextHandle context = ui.CreateContext(new UIContextOptions(
                 $"Canvas/{identity.runtimeIdentity}", width, height, density));
             try
             {
-                UiDocumentHandle loaded = ui.LoadDocument(context, source);
+                UIDocumentHandle loaded = ui.LoadDocument(context, source);
                 ui.ShowDocument(context, loaded);
                 m_ui = ui;
                 m_context = context;
                 m_loadedDocument = loaded;
-                m_documentId = source.identity.persistentId;
+                m_documentId = source.identity.persistentID;
                 m_documentVersion = source.contentVersion;
                 m_viewportWidth = width;
                 m_viewportHeight = height;
@@ -273,35 +273,35 @@ public sealed class Canvas : GameBehavior
     }
 
     internal bool IsCurrentDocument(
-        IUiService ui,
-        UiContextHandle context,
-        UiDocumentHandle loadedDocument
+        IUIService ui,
+        UIContextHandle context,
+        UIDocumentHandle loadedDocument
     ) => !isDestroyed && isActiveAndEnabled
         && ReferenceEquals(m_ui, ui) && m_context == context && m_loadedDocument == loadedDocument
         && document is { isMissing: false, source: not null } source
-        && source.identity.persistentId == m_documentId && source.contentVersion == m_documentVersion;
+        && source.identity.persistentID == m_documentId && source.contentVersion == m_documentVersion;
 
-    internal void PublishEvents(IReadOnlyList<UiEvent> events)
+    internal void PublishEvents(IReadOnlyList<UIEvent> events)
     {
         ArgumentNullException.ThrowIfNull(events);
-        foreach (UiEvent uiEvent in events)
+        foreach (UIEvent uiEvent in events)
             m_eventDispatcher.Enqueue(new CanvasUiEvent(uiEvent));
     }
 
-    private UiContextHandle RequireContext()
+    private UIContextHandle RequireContext()
         => EnsureDocument(m_context.isValid ? m_viewportWidth : referenceWidth,
             m_context.isValid ? m_viewportHeight : referenceHeight,
             m_context.isValid ? m_density : 1f).context;
 
-    private UiDocumentHandle RequireDocument()
+    private UIDocumentHandle RequireDocument()
         => EnsureDocument(m_context.isValid ? m_viewportWidth : referenceWidth,
             m_context.isValid ? m_viewportHeight : referenceHeight,
             m_context.isValid ? m_density : 1f).loadedDocument;
 
     private sealed class CanvasUiEvent : Event
     {
-        public CanvasUiEvent(UiEvent value) => this.value = value;
+        public CanvasUiEvent(UIEvent value) => this.value = value;
 
-        public UiEvent value { get; }
+        public UIEvent value { get; }
     }
 }

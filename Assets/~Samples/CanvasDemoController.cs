@@ -9,7 +9,7 @@ namespace Inno.Canvas.Samples;
 /// <summary>
 /// Demonstrates button events, HUD text changes, and an RCSS fade.
 /// </summary>
-[StableTypeId("600db367-c503-438a-a2c4-bf3da741e9a9")]
+[StableTypeID("600db367-c503-438a-a2c4-bf3da741e9a9")]
 public sealed class CanvasDemoController : GameBehavior
 {
     private int m_clicks;
@@ -23,7 +23,7 @@ public sealed class CanvasDemoController : GameBehavior
             return;
         m_subscription = canvas.Listen(uiEvent =>
         {
-            if (uiEvent.type != UiEventType.Click || uiEvent.targetId != "launch")
+            if (uiEvent.type != UIEventType.Click || uiEvent.targetID != "launch")
                 return;
             m_clicks++;
             m_faded = !m_faded;

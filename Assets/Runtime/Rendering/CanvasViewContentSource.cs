@@ -142,13 +142,13 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
             existing.layout.logicalWidth == layout.logicalWidth &&
             existing.layout.logicalHeight == layout.logicalHeight)
             layout = existing.layout;
-        (IUiService ui, UiContextHandle handle, UiDocumentHandle document) =
+        (IUIService ui, UIContextHandle handle, UIDocumentHandle document) =
             canvas.EnsureDocument(layout.width, layout.height, layout.density);
         if (m_states.TryGetValue(id, out CanvasState? state))
         {
             if (state.MatchesOwner(canvas)
                 && ReferenceEquals(state.ui, ui)
-                && state.documentId == canvas.document!.identity.persistentId
+                && state.documentId == canvas.document!.identity.persistentID
                 && state.documentVersion == canvas.document.contentVersion
                 && state.context == handle)
             {
@@ -163,7 +163,7 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
             throw new InvalidOperationException("The source-local Canvas material is unavailable.");
         state = new CanvasState(canvas.identity, ui, handle, document, layout,
             new CanvasViewDrawable($"inno.canvas.{id}", material, canvas.renderState),
-            canvas.document!.identity.persistentId, canvas.document.contentVersion);
+            canvas.document!.identity.persistentID, canvas.document.contentVersion);
         m_states.Add(id, state);
         return state;
     }
@@ -234,9 +234,9 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
 
     private sealed class CanvasState(
         Identity ownerIdentity,
-        IUiService ui,
-        UiContextHandle context,
-        UiDocumentHandle document,
+        IUIService ui,
+        UIContextHandle context,
+        UIDocumentHandle document,
         CanvasLayout layout,
         CanvasViewDrawable drawable,
         Guid documentId,
@@ -251,9 +251,9 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
         private Vector2 m_routedPosition;
         private ulong m_routedFrame = ulong.MaxValue;
 
-        internal IUiService ui { get; } = ui;
-        internal UiContextHandle context { get; } = context;
-        internal UiDocumentHandle document { get; } = document;
+        internal IUIService ui { get; } = ui;
+        internal UIContextHandle context { get; } = context;
+        internal UIDocumentHandle document { get; } = document;
         internal CanvasViewDrawable drawable { get; } = drawable;
         internal Guid documentId { get; } = documentId;
         internal long documentVersion { get; } = documentVersion;
@@ -367,7 +367,7 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
                 m_captured = true;
             Vector2 position = input.pointerInside || m_captured
                 ? localPosition : new Vector2(-10000f, -10000f);
-            ui.Update(context, new UiInputSnapshot(position, input.scrollDelta, input.modifiers,
+            ui.Update(context, new UIInputSnapshot(position, input.scrollDelta, input.modifiers,
                 input.keysPressed, input.keysReleased, input.buttonsPressed,
                 input.buttonsReleased, input.textInput));
             if (!isValid)
@@ -375,13 +375,13 @@ public sealed class CanvasViewContentSource : IViewContentSource, IViewContentFr
                 Dispose();
                 return false;
             }
-            IReadOnlyList<UiEvent> events = ui.DrainEvents(context);
+            IReadOnlyList<UIEvent> events = ui.DrainEvents(context);
             if (!isValid)
             {
                 Dispose();
                 return false;
             }
-            UiRenderFrame rendered = ui.Render(context);
+            UIRenderFrame rendered = ui.Render(context);
             Canvas? owner = ResolveOwner();
             if (owner is null)
             {

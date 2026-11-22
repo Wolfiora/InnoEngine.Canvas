@@ -69,7 +69,7 @@ public sealed class CanvasAuthoringTests
             new ToolRunner(executables, includes)));
         RenderTextureFormat[] formats = Enum.GetValues<RenderTextureFormat>();
         var capabilities = new GraphicsCapabilities(
-            GraphicsApi.Metal,
+            GraphicsApi.metal,
             GraphicsCapability.None,
             new GraphicsLimits(256, 8, 8192, 16),
             formats, formats, formats, formats,
@@ -102,7 +102,7 @@ public sealed class CanvasAuthoringTests
     private static async Task<ProductNativeBuildResult> PrepareShaderTools()
     {
         string repository = TestRepository.GetRoot(typeof(CanvasAuthoringTests).Assembly);
-        var target = new BuildTargetId("macos-arm64");
+        var target = new BuildTargetID("macos-arm64");
         var context = StandardBuildEnvironment.Capture(AppContext.BaseDirectory, target);
         var build = StandardBuildDistribution.Create(context).build;
         var native = new NativeBuildContext(repository, "debug").WithBindingGenerator(build.ResolveBindingGenerator(target.value));

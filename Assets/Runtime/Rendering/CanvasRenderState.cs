@@ -6,22 +6,22 @@ namespace Inno.Canvas;
 
 internal sealed class CanvasRenderState
 {
-    private readonly Dictionary<ulong, UiMeshUpdate> m_meshes = [];
-    private readonly Dictionary<ulong, UiTextureUpdate> m_textures = [];
+    private readonly Dictionary<ulong, UIMeshUpdate> m_meshes = [];
+    private readonly Dictionary<ulong, UITextureUpdate> m_textures = [];
 
-    internal IReadOnlyDictionary<ulong, UiMeshUpdate> meshes => m_meshes;
-    internal IReadOnlyDictionary<ulong, UiTextureUpdate> textures => m_textures;
+    internal IReadOnlyDictionary<ulong, UIMeshUpdate> meshes => m_meshes;
+    internal IReadOnlyDictionary<ulong, UITextureUpdate> textures => m_textures;
 
-    internal void Apply(UiRenderFrame frame)
+    internal void Apply(UIRenderFrame frame)
     {
         ArgumentNullException.ThrowIfNull(frame);
-        foreach (UiMeshHandle mesh in frame.releasedMeshes)
+        foreach (UIMeshHandle mesh in frame.releasedMeshes)
             m_meshes.Remove(mesh.value);
-        foreach (UiMeshUpdate update in frame.meshUpdates)
+        foreach (UIMeshUpdate update in frame.meshUpdates)
             m_meshes[update.mesh.value] = update;
-        foreach (UiTextureHandle texture in frame.releasedTextures)
+        foreach (UITextureHandle texture in frame.releasedTextures)
             m_textures.Remove(texture.value);
-        foreach (UiTextureUpdate update in frame.textureUpdates)
+        foreach (UITextureUpdate update in frame.textureUpdates)
             m_textures[update.texture.value] = update;
     }
 

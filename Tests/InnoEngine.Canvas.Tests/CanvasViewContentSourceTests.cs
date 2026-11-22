@@ -35,10 +35,10 @@ public sealed class CanvasViewContentSourceTests
         using var loader = fixture.CreateLoader();
         using IDisposable assetScope = fixture.EnterAssetScope(loader);
         using IDisposable settingsScope = ProjectSettingsExecutionContext.EnterScope(new FixedSettings());
-        UiDocumentAsset? imported = loader.Load(
-            AssetPath.Project("~Samples/CanvasDemo.rml"), typeof(UiDocumentAsset)) as UiDocumentAsset;
+        UIDocumentAsset? imported = loader.Load(
+            AssetPath.Project("~Samples/CanvasDemo.rml"), typeof(UIDocumentAsset)) as UIDocumentAsset;
         Assert.True(imported is not null, fixture.diagnosticSummary);
-        UiDocumentAsset document = imported!;
+        UIDocumentAsset document = imported!;
         GameScene scene = fixture.world.LoadNewScene("Canvas Test");
         GameObject owner = scene.CreateObject("World UI");
         owner.transform.localPosition = new Vector3(0.25f, 0f, 0f);
@@ -46,12 +46,12 @@ public sealed class CanvasViewContentSourceTests
         owner.transform.localScale = new Vector3(2f, 1f, 0f);
         Canvas canvas = owner.AddComponent<Canvas>();
         canvas.document = document;
-        var receivedEvents = new List<UiEvent>();
+        var receivedEvents = new List<UIEvent>();
         using IDisposable subscription = canvas.Listen(receivedEvents.Add);
 
         var ui = new CapturingUi();
         using var source = new CanvasViewContentSource();
-        using IDisposable uiScope = UiExecutionContext.EnterScope(ui);
+        using IDisposable uiScope = UIExecutionContext.EnterScope(ui);
         Assert.False(canvas.isReady);
         Assert.True(canvas.SetText("message", "Updated without a rendering model"));
         Assert.True(canvas.isReady);
@@ -81,10 +81,10 @@ public sealed class CanvasViewContentSourceTests
         Assert.Equal(1, ui.shown);
         Assert.Equal(1, ui.updated);
         Assert.Equal(1, ui.rendered);
-        Assert.Equal(owner.identity.persistentId, item.owner.persistentId);
+        Assert.Equal(owner.identity.persistentID, item.owner.persistentID);
         Assert.Empty(receivedEvents);
         fixture.world.Update(0.016f);
-        Assert.Equal(UiEventType.Click, Assert.Single(receivedEvents).type);
+        Assert.Equal(UIEventType.Click, Assert.Single(receivedEvents).type);
         Assert.True(canvas.SetAttribute("launch", "disabled", "true"));
         Assert.Equal(1, ui.attributesSet);
 
@@ -128,7 +128,7 @@ public sealed class CanvasViewContentSourceTests
         Assert.Equal(-10000f, ui.lastInput.mousePosition.x);
 
         var replacementUi = new CapturingUi();
-        using (UiExecutionContext.EnterScope(replacementUi))
+        using (UIExecutionContext.EnterScope(replacementUi))
         {
             var replacementItems = new CapturingItems();
             source.Collect(new ViewContentContext(content, "game", view, 5, 0.016f), replacementItems);
@@ -176,13 +176,13 @@ public sealed class CanvasViewContentSourceTests
         using var loader = fixture.CreateLoader();
         using IDisposable assets = fixture.EnterAssetScope(loader);
         using IDisposable settings = ProjectSettingsExecutionContext.EnterScope(new FixedSettings());
-        var document = Assert.IsType<UiDocumentAsset>(loader.Load(AssetPath.Project("~Samples/CanvasDemo.rml"), typeof(UiDocumentAsset)));
+        var document = Assert.IsType<UIDocumentAsset>(loader.Load(AssetPath.Project("~Samples/CanvasDemo.rml"), typeof(UIDocumentAsset)));
         GameScene scene = fixture.world.LoadNewScene("Deferred Canvas");
         GameObject owner = scene.CreateObject("UI");
         Canvas canvas = owner.AddComponent<Canvas>();
         canvas.document = document;
         var ui = new CapturingUi();
-        using IDisposable uiScope = UiExecutionContext.EnterScope(ui);
+        using IDisposable uiScope = UIExecutionContext.EnterScope(ui);
         using var source = new CanvasViewContentSource();
         var view = new RenderView("deferred", new RenderViewport(0, 0, 800, 450), Matrix.identity, Matrix.identity);
         using ContentReadScope content = new([scene.identity]);
@@ -209,7 +209,7 @@ public sealed class CanvasViewContentSourceTests
                 owner.AddComponent<Canvas>().document = document;
                 break;
             case "ContextReplaced":
-                using (UiExecutionContext.EnterScope(new CapturingUi()))
+                using (UIExecutionContext.EnterScope(new CapturingUi()))
                     Assert.True(canvas.SetText("message", "Replacement context"));
                 break;
             case "Unload":
@@ -249,9 +249,9 @@ public sealed class CanvasViewContentSourceTests
         using var loader = fixture.CreateLoader();
         using IDisposable assets = fixture.EnterAssetScope(loader);
         using IDisposable settings = ProjectSettingsExecutionContext.EnterScope(new FixedSettings());
-        var document = Assert.IsType<UiDocumentAsset>(loader.Load(AssetPath.Project("~Samples/CanvasDemo.rml"), typeof(UiDocumentAsset)));
+        var document = Assert.IsType<UIDocumentAsset>(loader.Load(AssetPath.Project("~Samples/CanvasDemo.rml"), typeof(UIDocumentAsset)));
         var ui = new CapturingUi();
-        using IDisposable uiScope = UiExecutionContext.EnterScope(ui);
+        using IDisposable uiScope = UIExecutionContext.EnterScope(ui);
         using var source = new CanvasViewContentSource();
         (WeakReference<Canvas> weak, IViewPointerTarget target) = CollectDestroyedCanvas(fixture.world.LoadNewScene("Weak Canvas"), document, source);
         GC.Collect();
@@ -269,7 +269,7 @@ public sealed class CanvasViewContentSourceTests
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static (WeakReference<Canvas>, IViewPointerTarget) CollectDestroyedCanvas(
         GameScene scene,
-        UiDocumentAsset document,
+        UIDocumentAsset document,
         CanvasViewContentSource source
     ) {
         GameObject owner = scene.CreateObject("Temporary UI");
@@ -308,11 +308,11 @@ public sealed class CanvasViewContentSourceTests
 
     private sealed class FixedSettings : IProjectSettingsLookup
     {
-        public Guid ownerId { get; } = Guid.NewGuid();
+        public Guid ownerID { get; } = Guid.NewGuid();
         public long revision => 1;
-        public TSetting Get<TSetting>(ProjectSettingId id) where TSetting : class, ISerializable
+        public TSetting Get<TSetting>(ProjectSettingID id) where TSetting : class, ISerializable
             => (TSetting)(object)new CanvasProjectSettings();
-        public bool TryGet<TSetting>(ProjectSettingId id, out TSetting? setting)
+        public bool TryGet<TSetting>(ProjectSettingID id, out TSetting? setting)
             where TSetting : class, ISerializable
         {
             setting = Get<TSetting>(id);
@@ -320,7 +320,7 @@ public sealed class CanvasViewContentSourceTests
         }
     }
 
-    private sealed class CapturingUi : IUiService
+    private sealed class CapturingUi : IUIService
     {
         internal int created { get; private set; }
         internal int destroyed { get; private set; }
@@ -329,59 +329,59 @@ public sealed class CanvasViewContentSourceTests
         internal int updated { get; private set; }
         internal int rendered { get; private set; }
         internal int attributesSet { get; private set; }
-        internal UiInputSnapshot? lastInput { get; private set; }
-        internal UiContextOptions lastOptions { get; private set; }
+        internal UIInputSnapshot? lastInput { get; private set; }
+        internal UIContextOptions lastOptions { get; private set; }
         internal Action? onUpdate { get; set; }
 
-        public UiContextHandle CreateContext(UiContextOptions options)
+        public UIContextHandle CreateContext(UIContextOptions options)
         {
             created++;
             lastOptions = options;
-            return new UiContextHandle(1);
+            return new UIContextHandle(1);
         }
-        public void DestroyContext(UiContextHandle context) => destroyed++;
-        public void SetViewport(UiContextHandle context, int width, int height, float density = 1f)
-            => lastOptions = new UiContextOptions(lastOptions.name, width, height, density);
-        public bool HasElementAtPoint(UiContextHandle context, Vector2 position) => true;
-        public UiDocumentHandle LoadDocument(UiContextHandle context, UiDocumentSource source)
+        public void DestroyContext(UIContextHandle context) => destroyed++;
+        public void SetViewport(UIContextHandle context, int width, int height, float density = 1f)
+            => lastOptions = new UIContextOptions(lastOptions.name, width, height, density);
+        public bool HasElementAtPoint(UIContextHandle context, Vector2 position) => true;
+        public UIDocumentHandle LoadDocument(UIContextHandle context, UIDocumentSource source)
         {
             loaded++;
-            return new UiDocumentHandle(2);
+            return new UIDocumentHandle(2);
         }
-        public UiDocumentHandle LoadDocument(UiContextHandle context, UiDocumentAsset document)
+        public UIDocumentHandle LoadDocument(UIContextHandle context, UIDocumentAsset document)
         {
             loaded++;
-            return new UiDocumentHandle(2);
+            return new UIDocumentHandle(2);
         }
-        public void ShowDocument(UiContextHandle context, UiDocumentHandle document) => shown++;
-        public void HideDocument(UiContextHandle context, UiDocumentHandle document) { }
-        public void CloseDocument(UiContextHandle context, UiDocumentHandle document) { }
-        public bool SetText(UiContextHandle context, UiDocumentHandle document, string elementId, string text) => true;
-        public bool SetContent(UiContextHandle context, UiDocumentHandle document, string elementId, UiDocumentFragment content) => true;
-        public bool SetAttribute(UiContextHandle context, UiDocumentHandle document, string elementId, string name, string value)
+        public void ShowDocument(UIContextHandle context, UIDocumentHandle document) => shown++;
+        public void HideDocument(UIContextHandle context, UIDocumentHandle document) { }
+        public void CloseDocument(UIContextHandle context, UIDocumentHandle document) { }
+        public bool SetText(UIContextHandle context, UIDocumentHandle document, string elementId, string text) => true;
+        public bool SetContent(UIContextHandle context, UIDocumentHandle document, string elementId, UIDocumentFragment content) => true;
+        public bool SetAttribute(UIContextHandle context, UIDocumentHandle document, string elementId, string name, string value)
         {
             attributesSet++;
             return true;
         }
-        public bool SetClass(UiContextHandle context, UiDocumentHandle document, string elementId, string className, bool active) => true;
-        public void RegisterTexture(UiContextHandle context, string source, UiTextureData texture) { }
-        public void Update(UiContextHandle context) => updated++;
+        public bool SetClass(UIContextHandle context, UIDocumentHandle document, string elementId, string className, bool active) => true;
+        public void RegisterTexture(UIContextHandle context, string source, UITextureData texture) { }
+        public void Update(UIContextHandle context) => updated++;
         public void Update(
-            UiContextHandle context,
-            UiInputSnapshot input
+            UIContextHandle context,
+            UIInputSnapshot input
         ) {
             updated++;
             lastInput = input;
             onUpdate?.Invoke();
         }
-        public UiRenderFrame Render(UiContextHandle context)
+        public UIRenderFrame Render(UIContextHandle context)
         {
             rendered++;
-            var builder = new UiRenderFrameBuilder();
+            var builder = new UIRenderFrameBuilder();
             builder.AddTextureUpdate(new(4), 1, 1, 1, [255, 255, 255, 255]);
             return builder.Build();
         }
-        public IReadOnlyList<UiEvent> DrainEvents(UiContextHandle context)
-            => [new UiEvent(UiEventType.Click, new UiDocumentHandle(2), "launch")];
+        public IReadOnlyList<UIEvent> DrainEvents(UIContextHandle context)
+            => [new UIEvent(UIEventType.Click, new UIDocumentHandle(2), "launch")];
     }
 }

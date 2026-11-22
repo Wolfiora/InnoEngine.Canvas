@@ -14,7 +14,7 @@ public sealed class CanvasRcssImportTests
     {
         var reads = new List<AssetPath>();
         var frontend = new RmlUiDocumentFrontend();
-        UiDocumentAnalysis result = frontend.Analyze(new UiDocumentSourceFile(
+        UIDocumentAnalysis result = frontend.Analyze(new UIDocumentSourceFile(
             "~Samples/Menu.rml",
             "<rml><head><link type='text/rcss' href='Styles/Menu.rcss' /></head><body /></rml>",
             path =>
